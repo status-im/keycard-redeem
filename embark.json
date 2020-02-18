@@ -1,0 +1,23 @@
+{
+  "contracts": ["contracts/**"],
+  "app": {
+    "css/app.css": ["app/css/**"],
+    "js/app.js": ["app/js/index.js"],
+    "images/": ["app/images/**"],
+    "index.html": "app/index.html"
+  },
+  "buildDir": "dist/",
+  "config": "config/",
+  "versions": {
+    "solc": "0.6.1"
+  },
+  "plugins": {
+  },
+  "options": {
+    "solc": {
+      "optimize": true,
+      "optimize-runs": 200
+    }
+  },
+  "generationDir": "embarkArtifacts"
+}

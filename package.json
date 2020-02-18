@@ -1,0 +1,19 @@
+{
+  "name": "gift-keycard",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "test": "embark test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "embarkjs": "^5.1.1",
+    "embarkjs-ens": "^5.1.1",
+    "embarkjs-ipfs": "^5.1.1",
+    "embarkjs-swarm": "^5.1.1",
+    "embarkjs-web3": "^5.1.1",
+    "embarkjs-whisper": "^5.1.1"
+  }
+}
