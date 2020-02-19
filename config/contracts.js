@@ -30,10 +30,9 @@ module.exports = {
     // filteredFields: [],
 
     deploy: {
-      // example:
-      //SimpleStorage: {
-      //  args: [ 100 ]
-      //}
+      GiftsBatch: {
+        deploy: false,
+      }
     }
   },
 
