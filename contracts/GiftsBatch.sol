@@ -50,7 +50,7 @@ contract GiftsBatch {
     ));
   }
 
-  function getChainID() internal pure returns (uint256) {
+  function getChainID() public pure returns (uint256) {
     uint256 id;
     assembly {
       id := chainid()

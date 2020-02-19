@@ -21,7 +21,7 @@ config({
         args: ["$TestToken", EXPIRATION_TIME],
       }
     }
-  }
+  },
 }, (_err, _accounts) => {
   shop    = _accounts[0];
   keycard_1 = _accounts[1];
@@ -33,7 +33,9 @@ let sendMethod;
 
 async function signRedeem(contractAddress, signer, message) {
   const result = await web3.eth.net.getId();
-  const chainId = parseInt(result);
+  let chainId = parseInt(result);
+  //FIXME: getChainID returns 1 so we hardcode it here to 1.
+  chainId = 1;
 
   let domain = [
     { name: "name", type: "string" },
@@ -71,7 +73,7 @@ async function signRedeem(contractAddress, signer, message) {
       id: Date.now().toString().substring(9),
       method: "eth_signTypedData",
       params: [signer, data],
-      from: keycard_2
+      from: signer
     }, (error, res) => {
       if (error) {
         return reject(error);
@@ -216,13 +218,13 @@ contract("GiftsBatch", function () {
 
   async function testRedeem(redeemCode) {
     let totalSupply = await GiftsBatch.methods.totalSupply().call();
-    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY);
+    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY, `total contract supply is ${totalSupply} instead of ${TOTAL_SUPPLY}`);
 
     let factoryBalance = await TestToken.methods.balanceOf(GiftsBatch._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY);
+    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY, `factory balance before is ${factoryBalance} instead of ${TOTAL_SUPPLY}`);
 
     let userBalance = await TestToken.methods.balanceOf(user).call();
-    assert.equal(parseInt(userBalance), 0);
+    assert.equal(parseInt(userBalance), 0, `user balance is ${userBalance} instead of 0`);
 
     // const gift = await GiftsBatch.methods.gifts(keycard_1).call();
     // const giftBlockNumber = gift.blockNumber;
@@ -235,23 +237,25 @@ contract("GiftsBatch", function () {
       code: redeemCode,
     };
 
-    const sig = await signRedeem(GiftsBatch._address, keycard_1, message);
+    const c = await GiftsBatch.methods.getChainID().call();
+    console.log("getChainID", c)
 
+    const sig = await signRedeem(GiftsBatch._address, keycard_1, message);
     const redeem = GiftsBatch.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     await redeem.send({
-      from: user,
+      from: keycard_1,
       gas: redeemGas,
     });
 
     factoryBalance = await TestToken.methods.balanceOf(GiftsBatch._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY - GIFT_AMOUNT);
+    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY - GIFT_AMOUNT, `factoryBalance after redeem should be ${TOTAL_SUPPLY - GIFT_AMOUNT} instead of ${factoryBalance}`);
 
     userBalance = await TestToken.methods.balanceOf(user).call();
-    assert.equal(parseInt(userBalance), GIFT_AMOUNT);
+    assert.equal(parseInt(userBalance), GIFT_AMOUNT, `user`, `userBalance after redeem should be ${GIFT_AMOUNT} instead of ${userBalance}`);
 
     totalSupply = await GiftsBatch.methods.totalSupply().call();
-    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY - GIFT_AMOUNT);
+    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY - GIFT_AMOUNT, `totalSupply after redeem should be ${TOTAL_SUPPLY - GIFT_AMOUNT} instead of ${totalSupply}`);
   }
 
   it("cannot redeem after expiration date", async function() {
