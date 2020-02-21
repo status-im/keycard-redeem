@@ -99,6 +99,12 @@ function mineAt(timestamp) {
   });
 }
 
+if (assert.match === undefined) {
+  assert.match = (message, pattern) => {
+    assert(pattern.test(message), `${message} doesn't match ${pattern}`);
+  }
+}
+
 contract("GiftBucket", function () {
   sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
 
@@ -117,40 +123,25 @@ contract("GiftBucket", function () {
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY);
   });
 
-  // it("deploy", async function() {
-  //   const deploy = GiftBucket.clone().deploy({ arguments: [keycard_1, EXPIRATION_TIME] });
-  //   giftsBatchInstance = await deploy.send();
-  // });
-
-  it("approve ERC20 transfer", async function() {
-    const approve = TestToken.methods.approve(GiftBucket._address, TOTAL_SUPPLY)
-    const approveGas = await approve.estimateGas();
-    await approve.send({
-      from: shop,
-      gas: approveGas,
-    });
-  });
-
-  it("addSupply", async function() {
-    let factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), 0, `factory balance before is ${factoryBalance} instead of 0`);
+  it("add supply", async function() {
+    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    assert.equal(parseInt(bucketBalance), 0, `bucket balance before is ${bucketBalance} instead of 0`);
 
     let shopBalance = await TestToken.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY, `shop balance before is ${shopBalance} instead of ${TOTAL_SUPPLY}`);
 
-    const addSupply = GiftBucket.methods.addSupply(TOTAL_SUPPLY)
-    const addSupplyGas = await addSupply.estimateGas();
-    await addSupply.send({
+    const transfer = TestToken.methods.transfer(GiftBucket._address, TOTAL_SUPPLY);
+    const transferGas = await transfer.estimateGas();
+    await transfer.send({
       from: shop,
-      gas: addSupplyGas,
+      gas: transferGas,
     });
 
-    factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY, `factory balance after is ${factoryBalance} instead of ${TOTAL_SUPPLY}`);
+    bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    assert.equal(parseInt(bucketBalance), TOTAL_SUPPLY, `bucket balance after is ${bucketBalance} instead of ${TOTAL_SUPPLY}`);
 
     shopBalance = await TestToken.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), 0, `shop balance after is ${shopBalance} instead of 0`);
-
 
     let totalSupply = await GiftBucket.methods.totalSupply().call();
     assert.equal(parseInt(totalSupply), TOTAL_SUPPLY, `total contract supply is ${totalSupply} instead of ${TOTAL_SUPPLY}`);
@@ -160,6 +151,9 @@ contract("GiftBucket", function () {
   });
 
   async function testCreateGift(keycard, amount) {
+    let initialSupply = await GiftBucket.methods.totalSupply().call();
+    let initialAvailableSupply = await GiftBucket.methods.availableSupply().call();
+
     const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
     const createGift = GiftBucket.methods.createGift(keycard, amount, redeemCodeHash);
     const createGiftGas = await createGift.estimateGas();
@@ -169,13 +163,13 @@ contract("GiftBucket", function () {
     });
 
     let totalSupply = await GiftBucket.methods.totalSupply().call();
-    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY);
+    assert.equal(parseInt(totalSupply), parseInt(initialSupply), `totalSupply is ${totalSupply} instead of ${initialSupply}`);
 
     let availableSupply = await GiftBucket.methods.availableSupply().call();
-    assert.equal(parseInt(availableSupply), TOTAL_SUPPLY - amount);
+    assert.equal(parseInt(availableSupply), parseInt(initialAvailableSupply) - amount);
   }
 
-  it("createGift should fail amount is zero", async function() {
+  it("createGift should fail if amount is zero", async function() {
     try {
       await testCreateGift(keycard_1, 0);
       assert.fail("createGift should have failed");
@@ -216,28 +210,21 @@ contract("GiftBucket", function () {
     }
   });
 
-  async function testRedeem(redeemCode) {
-    let totalSupply = await GiftBucket.methods.totalSupply().call();
-    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY, `total contract supply is ${totalSupply} instead of ${TOTAL_SUPPLY}`);
+  async function testRedeem(receiver, keycard, signer, redeemCode) {
+    let initialBucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    let initialUserBalance = await TestToken.methods.balanceOf(user).call();
+    let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
 
-    let factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY, `factory balance before is ${factoryBalance} instead of ${TOTAL_SUPPLY}`);
-
-    let userBalance = await TestToken.methods.balanceOf(user).call();
-    assert.equal(parseInt(userBalance), 0, `user balance is ${userBalance} instead of 0`);
-
-    // const gift = await GiftBucket.methods.gifts(keycard_1).call();
-    // const giftBlockNumber = gift.blockNumber;
-    // const message = web3.utils.sha3(user);
-    // const sig = await web3.eth.sign(message, keycard_1);
+    let gift = await GiftBucket.methods.gifts(keycard).call();
+    const amount = parseInt(gift.amount);
 
     const message = {
-      keycard: keycard_1,
-      receiver: user,
+      keycard: keycard,
+      receiver: receiver,
       code: redeemCode,
     };
 
-    const sig = await signRedeem(GiftBucket._address, keycard_1, message);
+    const sig = await signRedeem(GiftBucket._address, signer, message);
     const redeem = GiftBucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     await redeem.send({
@@ -245,20 +232,25 @@ contract("GiftBucket", function () {
       gas: redeemGas,
     });
 
-    factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY - GIFT_AMOUNT, `factoryBalance after redeem should be ${TOTAL_SUPPLY - GIFT_AMOUNT} instead of ${factoryBalance}`);
 
+    let expectedBucketBalance = parseInt(initialBucketBalance) - amount;
+    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    assert.equal(parseInt(bucketBalance), expectedBucketBalance, `bucketBalance after redeem should be ${expectedBucketBalance} instead of ${bucketBalance}`);
+
+    let expectedUserBalance = parseInt(initialUserBalance + amount);
     userBalance = await TestToken.methods.balanceOf(user).call();
-    assert.equal(parseInt(userBalance), GIFT_AMOUNT, `user`, `userBalance after redeem should be ${GIFT_AMOUNT} instead of ${userBalance}`);
+    assert.equal(parseInt(userBalance), expectedUserBalance, `user`, `userBalance after redeem should be ${expectedUserBalance} instead of ${userBalance}`);
 
-    totalSupply = await GiftBucket.methods.totalSupply().call();
-    assert.equal(parseInt(totalSupply), TOTAL_SUPPLY - GIFT_AMOUNT, `totalSupply after redeem should be ${TOTAL_SUPPLY - GIFT_AMOUNT} instead of ${totalSupply}`);
+    let expectedRedeemableSupply = initialRedeemableSupply - amount;
+    let redeemableSupply = await GiftBucket.methods.redeemableSupply().call();
+    assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
+
   }
 
   it("cannot redeem after expiration date", async function() {
     await mineAt(EXPIRATION_TIME);
     try {
-      await testRedeem(REDEEM_CODE);
+      await testRedeem(user, keycard_1, keycard_1, REDEEM_CODE);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /expired/);
@@ -268,34 +260,42 @@ contract("GiftBucket", function () {
   it("cannot redeem with invalid code", async function() {
     await mineAt(NOW);
     try {
-      await testRedeem(web3.utils.sha3("bad-code"));
+      await testRedeem(user, keycard_1, keycard_1, web3.utils.sha3("bad-code"));
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /invalid code/);
     }
   });
 
+  it("cannot redeem with invalid signature", async function() {
+    await mineAt(NOW);
+    try {
+      await testRedeem(user, keycard_1, keycard_2, REDEEM_CODE);
+      assert.fail("redeem should have failed");
+    } catch(e) {
+      assert.match(e.message, /wrong keycard sig/);
+    }
+  });
+
   it("can redeem before expiration date", async function() {
     await mineAt(NOW);
-    await testRedeem(REDEEM_CODE);
+    await testRedeem(user, keycard_1, keycard_1, REDEEM_CODE);
   });
 
   async function testKill() {
-    let shopBalance = await TestToken.methods.balanceOf(shop).call();
-    assert.equal(parseInt(shopBalance), 0);
-
-    let factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), TOTAL_SUPPLY - GIFT_AMOUNT);
+    let initialShopBalance = parseInt(await TestToken.methods.balanceOf(shop).call());
+    let initialBucketBalance = parseInt(await TestToken.methods.balanceOf(GiftBucket._address).call());
 
     await GiftBucket.methods.kill().send({
       from: shop,
     });
 
-    shopBalance = await TestToken.methods.balanceOf(shop).call();
-    assert.equal(parseInt(shopBalance), TOTAL_SUPPLY - GIFT_AMOUNT);
+    let expectedShopBalance = initialShopBalance + initialBucketBalance;
+    let shopBalance = await TestToken.methods.balanceOf(shop).call();
+    assert.equal(parseInt(shopBalance), expectedShopBalance, `shop balance after kill is ${shopBalance} instead of ${expectedShopBalance}`);
 
-    factoryBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
-    assert.equal(parseInt(factoryBalance), 0);
+    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    assert.equal(parseInt(bucketBalance), 0, `bucketBalance after kill is ${bucketBalance} instead of 0`);
   }
 
   it("shop cannot kill contract before expirationTime", async function() {

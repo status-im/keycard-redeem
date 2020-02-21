@@ -19,14 +19,13 @@ contract GiftBucket {
 
   mapping(address => Gift) public gifts;
 
-  uint256 public totalSupply;
-  uint256 public availableSupply;
-
   struct Redeem {
     address keycard;
     address receiver;
     bytes32 code;
   }
+
+  uint256 public redeemableSupply;
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
   bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address keycard,address receiver,bytes32 code)");
@@ -38,6 +37,8 @@ contract GiftBucket {
   }
 
   constructor(address _tokenAddress, uint256 _expirationTime) public {
+    require(_expirationTime > block.timestamp, "expiration can't be in the past");
+
     tokenContract = ERC20Token(_tokenAddress);
     expirationTime = _expirationTime;
     owner = msg.sender;
@@ -45,12 +46,12 @@ contract GiftBucket {
       EIP712DOMAIN_TYPEHASH,
       keccak256("KeycardGift"),
       keccak256("1"),
-      getChainID(),
+      _getChainID(),
       address(this)
     ));
   }
 
-  function getChainID() public pure returns (uint256) {
+  function _getChainID() internal pure returns (uint256) {
     uint256 id;
     assembly {
       id := chainid()
@@ -59,16 +60,20 @@ contract GiftBucket {
     return id;
   }
 
-  function addSupply(uint256 amount) external onlyOwner {
-    bool success = tokenContract.transferFrom(msg.sender, address(this), amount);
-    assert(success);
-    totalSupply += amount;
-    availableSupply += amount;
+  function totalSupply() public returns(uint256) {
+    return tokenContract.balanceOf(address(this));
+  }
+
+  function availableSupply() public returns(uint256) {
+    uint256 _totalSupply = this.totalSupply();
+    return _totalSupply - redeemableSupply;
   }
 
   function createGift(address keycard, uint256 amount, bytes32 code) external onlyOwner {
     require(amount > 0, "invalid amount");
-    require(availableSupply >= amount, "low supply");
+
+    uint256 _availableSupply = this.availableSupply();
+    require(_availableSupply >= amount, "low supply");
 
     Gift storage gift = gifts[keycard];
     require(gift.amount == 0, "keycard already used");
@@ -77,15 +82,14 @@ contract GiftBucket {
     gift.amount = amount;
     gift.code = code;
 
-    availableSupply -= amount;
+    redeemableSupply += amount;
   }
 
-  // function redeem(address keycard, address receiver, bytes32 code, bytes calldata sig) external {
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
     require(block.timestamp < expirationTime, "expired gift");
 
     bool signedByKeycard = verify(_redeem, sig);
-    require(signedByKeycard, "not signed by keycard");
+    require(signedByKeycard, "wrong keycard sig");
 
     Gift memory gift = gifts[_redeem.keycard];
     require(gift.amount > 0, "not found");
@@ -94,14 +98,14 @@ contract GiftBucket {
     require(codeHash == gift.code, "invalid code");
 
 
-    totalSupply -= gift.amount;
+    redeemableSupply -= gift.amount;
     tokenContract.transfer(_redeem.receiver, gift.amount);
   }
 
   function kill() external onlyOwner {
     require(block.timestamp >= expirationTime, "not expired yet");
 
-    bool success = tokenContract.transfer(owner, totalSupply);
+    bool success = tokenContract.transfer(owner, this.totalSupply());
     assert(success);
 
     selfdestruct(owner);
