@@ -66,6 +66,8 @@ contract GiftBucket {
 
   function availableSupply() public returns(uint256) {
     uint256 _totalSupply = this.totalSupply();
+    require(_totalSupply >= redeemableSupply, "redeemableSupply is greater than redeemableSupply");
+
     return _totalSupply - redeemableSupply;
   }
 
@@ -82,24 +84,29 @@ contract GiftBucket {
     gift.amount = amount;
     gift.code = code;
 
+    require(redeemableSupply + amount > redeemableSupply, "addition overflow");
     redeemableSupply += amount;
   }
 
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
     require(block.timestamp < expirationTime, "expired gift");
 
-    bool signedByKeycard = verify(_redeem, sig);
-    require(signedByKeycard, "wrong keycard sig");
-
-    Gift memory gift = gifts[_redeem.keycard];
+    Gift storage gift = gifts[_redeem.keycard];
     require(gift.amount > 0, "not found");
+
+    bool signedByKeycard = verifySig(_redeem, sig);
+    require(signedByKeycard, "wrong keycard sig");
 
     bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
     require(codeHash == gift.code, "invalid code");
 
+    uint256 amount = gift.amount;
+    require(redeemableSupply >= amount, "not enough redeemable supply");
 
-    redeemableSupply -= gift.amount;
-    tokenContract.transfer(_redeem.receiver, gift.amount);
+    gift.amount = 0;
+    redeemableSupply -= amount;
+
+    tokenContract.transfer(_redeem.receiver, amount);
   }
 
   function kill() external onlyOwner {
@@ -120,7 +127,7 @@ contract GiftBucket {
     ));
   }
 
-  function verify(Redeem memory _redeem, bytes memory sig) internal view returns(bool) {
+  function verifySig(Redeem memory _redeem, bytes memory sig) internal view returns(bool) {
     require(sig.length == 65, "bad signature length");
 
     bytes32 r;
