@@ -10,7 +10,10 @@ const NOW = Math.round(new Date().getTime() / 1000);
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
 
 let shop,
-    user;
+    user,
+    relayer,
+    keycard_1,
+    keycard_2;
 
 config({
   contracts: {
@@ -27,10 +30,11 @@ config({
     }
   },
 }, (_err, _accounts) => {
-  shop    = _accounts[0];
-  keycard_1 = _accounts[1];
-  keycard_2 = _accounts[2];
-  user    = _accounts[3];
+  shop      = _accounts[0];
+  user      = _accounts[1];
+  relayer   = _accounts[2];
+  keycard_1 = _accounts[3];
+  keycard_2 = _accounts[4];
 });
 
 let sendMethod;
@@ -251,7 +255,7 @@ contract("GiftBucket", function () {
     }
   });
 
-  async function testRedeem(receiver, recipient, signer, redeemCode) {
+  async function testRedeem(receiver, recipient, signer, relayer, redeemCode) {
     let initialBucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
     let initialUserBalance = await TestToken.methods.balanceOf(user).call();
     let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
@@ -269,7 +273,7 @@ contract("GiftBucket", function () {
     const redeem = GiftBucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     await redeem.send({
-      from: receiver,
+      from: relayer,
       gas: redeemGas,
     });
 
@@ -291,7 +295,7 @@ contract("GiftBucket", function () {
   it("cannot redeem after expiration date", async function() {
     await mineAt(EXPIRATION_TIME);
     try {
-      await testRedeem(user, keycard_1, keycard_1, REDEEM_CODE);
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /expired/);
@@ -301,7 +305,7 @@ contract("GiftBucket", function () {
   it("cannot redeem with invalid code", async function() {
     await mineAt(NOW);
     try {
-      await testRedeem(user, keycard_1, keycard_1, web3.utils.sha3("bad-code"));
+      await testRedeem(user, keycard_1, keycard_1, relayer, web3.utils.sha3("bad-code"));
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /invalid code/);
@@ -311,7 +315,7 @@ contract("GiftBucket", function () {
   it("cannot redeem with invalid signature", async function() {
     await mineAt(NOW);
     try {
-      await testRedeem(user, keycard_1, keycard_2, REDEEM_CODE);
+      await testRedeem(user, keycard_1, keycard_2, relayer, REDEEM_CODE);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /wrong recipient sig/);
@@ -320,7 +324,7 @@ contract("GiftBucket", function () {
 
   it("can redeem before expiration date", async function() {
     await mineAt(NOW);
-    await testRedeem(user, keycard_1, keycard_1, REDEEM_CODE);
+    await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE);
   });
 
   async function testKill() {
