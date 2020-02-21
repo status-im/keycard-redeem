@@ -5,6 +5,8 @@ import "./ERC20Token.sol";
 
 contract GiftBucket {
 
+  bool initialized;
+
   address payable public owner;
 
   ERC20Token public tokenContract;
@@ -12,7 +14,7 @@ contract GiftBucket {
   uint256 public expirationTime;
 
   struct Gift {
-    address keycard;
+    address recipient;
     uint256 amount;
     bytes32 code;
   }
@@ -20,7 +22,7 @@ contract GiftBucket {
   mapping(address => Gift) public gifts;
 
   struct Redeem {
-    address keycard;
+    address recipient;
     address receiver;
     bytes32 code;
   }
@@ -28,7 +30,7 @@ contract GiftBucket {
   uint256 public redeemableSupply;
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address keycard,address receiver,bytes32 code)");
+  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address recipient,address receiver,bytes32 code)");
   bytes32 DOMAIN_SEPARATOR;
 
   modifier onlyOwner() {
@@ -37,11 +39,18 @@ contract GiftBucket {
   }
 
   constructor(address _tokenAddress, uint256 _expirationTime) public {
+    initialize(_tokenAddress, _expirationTime, msg.sender);
+  }
+
+  function initialize(address _tokenAddress, uint256 _expirationTime, address _owner) public {
+    require(initialized == false, "already initialized");
+
     require(_expirationTime > block.timestamp, "expiration can't be in the past");
 
     tokenContract = ERC20Token(_tokenAddress);
     expirationTime = _expirationTime;
-    owner = msg.sender;
+    owner = payable(_owner);
+
     DOMAIN_SEPARATOR = keccak256(abi.encode(
       EIP712DOMAIN_TYPEHASH,
       keccak256("KeycardGift"),
@@ -49,6 +58,8 @@ contract GiftBucket {
       _getChainID(),
       address(this)
     ));
+
+    initialized = true;
   }
 
   function _getChainID() internal pure returns (uint256) {
@@ -60,27 +71,27 @@ contract GiftBucket {
     return id;
   }
 
-  function totalSupply() public returns(uint256) {
+  function totalSupply() public view returns(uint256) {
     return tokenContract.balanceOf(address(this));
   }
 
-  function availableSupply() public returns(uint256) {
+  function availableSupply() public view returns(uint256) {
     uint256 _totalSupply = this.totalSupply();
     require(_totalSupply >= redeemableSupply, "redeemableSupply is greater than redeemableSupply");
 
     return _totalSupply - redeemableSupply;
   }
 
-  function createGift(address keycard, uint256 amount, bytes32 code) external onlyOwner {
+  function createGift(address recipient, uint256 amount, bytes32 code) external onlyOwner {
     require(amount > 0, "invalid amount");
 
     uint256 _availableSupply = this.availableSupply();
     require(_availableSupply >= amount, "low supply");
 
-    Gift storage gift = gifts[keycard];
-    require(gift.amount == 0, "keycard already used");
+    Gift storage gift = gifts[recipient];
+    require(gift.amount == 0, "recipient already used");
 
-    gift.keycard = keycard;
+    gift.recipient = recipient;
     gift.amount = amount;
     gift.code = code;
 
@@ -91,11 +102,11 @@ contract GiftBucket {
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
     require(block.timestamp < expirationTime, "expired gift");
 
-    Gift storage gift = gifts[_redeem.keycard];
+    Gift storage gift = gifts[_redeem.recipient];
     require(gift.amount > 0, "not found");
 
     bool signedByKeycard = verifySig(_redeem, sig);
-    require(signedByKeycard, "wrong keycard sig");
+    require(signedByKeycard, "wrong recipient sig");
 
     bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
     require(codeHash == gift.code, "invalid code");
@@ -121,7 +132,7 @@ contract GiftBucket {
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {
     return keccak256(abi.encode(
       REDEEM_TYPEHASH,
-      _redeem.keycard,
+      _redeem.recipient,
       _redeem.receiver,
       _redeem.code
     ));
@@ -152,6 +163,6 @@ contract GiftBucket {
         hashRedeem(_redeem)
     ));
 
-    return ecrecover(digest, v, r, s) == _redeem.keycard;
+    return ecrecover(digest, v, r, s) == _redeem.recipient;
   }
 }
