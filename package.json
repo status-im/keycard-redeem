@@ -9,13 +9,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "embark-geth": "^5.2.2",
+    "embark-geth": "^5.2.0",
     "embark-graph": "^5.2.0",
-    "embark-ipfs": "^5.2.2",
-    "embark-parity": "^5.2.2",
+    "embark-ipfs": "^5.2.0",
+    "embark-parity": "^5.2.0",
     "embark-profiler": "^5.2.0",
-    "embark-swarm": "^5.2.2",
-    "embark-whisper-geth": "^5.2.2",
+    "embark-swarm": "^5.2.0",
+    "embark-whisper-geth": "^5.2.0",
     "embarkjs": "^5.2.0",
     "embarkjs-ens": "^5.2.0",
     "embarkjs-ipfs": "^5.1.1",
@@ -24,6 +24,7 @@
     "embarkjs-whisper": "^5.1.1"
   },
   "dependencies": {
+    "connected-react-router": "^6.7.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-redux": "^7.2.0",

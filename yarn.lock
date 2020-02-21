@@ -796,6 +796,13 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
 
+connected-react-router@^6.7.0:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/connected-react-router/-/connected-react-router-6.7.0.tgz#1c37a65684f1729533264c1b1903ee91c8ca3a15"
+  integrity sha512-RDmcmiwSfUWQ3U7J7RVkc9cwNtek26fUn0DWpA8pS7JylC97VNeosrsIxjJ/3CGDrzZPqnc0Hr/kZxjh75JGlw==
+  dependencies:
+    prop-types "^15.7.2"
+
 content-disposition@0.5.3:
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/content-disposition/-/content-disposition-0.5.3.tgz#e130caf7e7279087c5616c2007d0485698984fbd"
@@ -1213,7 +1220,7 @@ embark-core@^5.2.2:
     web3-utils "1.2.6"
     window-size "1.1.1"
 
-embark-geth@^5.2.2:
+embark-geth@^5.2.0:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/embark-geth/-/embark-geth-5.2.2.tgz#7550882de55262ec47ed33940952a061ef92ca50"
   integrity sha512-kPa+c/hcJ0WiTmVGLDXmSMANbVJx/FHtaNL0IYFaozacav6svUY7TzQkVN1h/0WMRd1m9PperL5tXsAf5uL6Ig==
@@ -1255,7 +1262,7 @@ embark-i18n@^5.1.1:
     i18n "0.8.3"
     os-locale "4.0.0"
 
-embark-ipfs@^5.2.2:
+embark-ipfs@^5.2.0:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/embark-ipfs/-/embark-ipfs-5.2.2.tgz#1a90927def8bac7a2b4301bb57bd0d986f094c33"
   integrity sha512-18htBZ/uxPHM9WiWPr9elbcHWpIruqxtuVQTI6eUCCWuxwCYJDFmHBJyo+3RDawnCgolTidfRML++HdheyJVgg==
@@ -1285,7 +1292,7 @@ embark-logger@^5.2.0:
     date-and-time "0.12.0"
     fs-extra "8.1.0"
 
-embark-parity@^5.2.2:
+embark-parity@^5.2.0:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/embark-parity/-/embark-parity-5.2.2.tgz#a97f47b3b0abc5e641e25425af1f533655ea0b1c"
   integrity sha512-C4q6aKXOJPz3r78AMSLfiYxYh1kjRmiuFdMZjiaqabN7Mx9StwXT5Cc0TuJV2tePoOpeym8p4NSKuDhZjrHAjw==
@@ -1327,7 +1334,7 @@ embark-storage@^5.2.2:
     lodash.clonedeep "4.5.0"
     shelljs "0.8.3"
 
-embark-swarm@^5.2.2:
+embark-swarm@^5.2.0:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/embark-swarm/-/embark-swarm-5.2.2.tgz#f4895742b41083e82a53a7733eefd40e2f53ded7"
   integrity sha512-eKWjBn7EbJX2ZrV9PlWWZwvH+11sRKU/kAyhdnAypUCbytfRnboQ6cHAtfRT56JMpDoaGUkH4MZ3AXdOK59lcQ==
@@ -1377,7 +1384,7 @@ embark-utils@^5.2.0:
     web3-eth-abi "1.2.6"
     ws "7.1.2"
 
-embark-whisper-geth@^5.2.2:
+embark-whisper-geth@^5.2.0:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/embark-whisper-geth/-/embark-whisper-geth-5.2.2.tgz#107e39f0fb7fff4535661f514a3c93fc291d02dc"
   integrity sha512-uOkSjxqSudiRECVDte1sDrCA9nC8fXkGaiXt/coMVNZUJfSLRi8//F/3l/Pzf/ng2AXEXnd2MEVhRYAZ6261/w==
