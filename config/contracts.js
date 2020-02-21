@@ -30,7 +30,7 @@ module.exports = {
     // filteredFields: [],
 
     deploy: {
-      GiftsBatch: {
+      GiftBucket: {
         deploy: false,
       }
     }

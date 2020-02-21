@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import "./ERC20Token.sol";
 
-contract GiftsBatch {
+contract GiftBucket {
 
   address payable public owner;
 
