@@ -1,5 +1,7 @@
+const EmbarkJS = artifacts.require('EmbarkJS');
 const TestToken = artifacts.require('TestToken');
-const GiftBucket = artifacts.require('GiftBucket');
+const _GiftBucket = artifacts.require('GiftBucket');
+const GiftBucketFactory = artifacts.require('GiftBucketFactory');
 
 const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
@@ -10,7 +12,6 @@ const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
 let shop,
     user;
 
-// For documentation please see https://framework.embarklabs.io/docs/contracts_testing.html
 config({
   contracts: {
     deploy: {
@@ -19,7 +20,10 @@ config({
       },
       "GiftBucket": {
         args: ["$TestToken", EXPIRATION_TIME],
-      }
+      },
+      "GiftBucketFactory": {
+        args: [],
+      },
     }
   },
 }, (_err, _accounts) => {
@@ -45,7 +49,7 @@ async function signRedeem(contractAddress, signer, message) {
   ];
 
   let redeem = [
-    { name: "keycard", type: "address" },
+    { name: "recipient", type: "address" },
     { name: "receiver", type: "address" },
     { name: "code", type: "bytes32" },
   ];
@@ -106,7 +110,44 @@ if (assert.match === undefined) {
 }
 
 contract("GiftBucket", function () {
+  let GiftBucket;
+
   sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
+
+  // it("deploy factory", async () => {
+  //   // only to test gas
+  //   await GiftBucketFactory.deploy([]);
+  // });
+
+  it("deploy bucket", async () => {
+    // only to test gas
+    await _GiftBucket.deploy([TestToken._address, EXPIRATION_TIME]);
+  });
+
+  it("deploy bucket via factory", async () => {
+    const create = GiftBucketFactory.methods.create(TestToken._address, EXPIRATION_TIME);
+    const gas = await create.estimateGas();
+    const receipt = await create.send({
+      from: shop,
+      gas: gas,
+    });
+
+    const bucketAddress = receipt.events.Created.returnValues.bucket;
+    const jsonInterface = _GiftBucket.options.jsonInterface;
+    GiftBucket = new EmbarkJS.Blockchain.Contract({
+      abi: jsonInterface,
+      address: bucketAddress,
+    });
+
+    // const deploy = await _GiftBucket.deploy({
+    //   arguments: [TestToken._address, EXPIRATION_TIME],
+    // });
+    // gas = await deploy.estimateGas();
+    // await deploy.send({
+    //   from: shop,
+    //   gas: gas,
+    // });
+  });
 
   it("shop buys 100 tokens", async function () {
     let supply = await TestToken.methods.totalSupply().call();
@@ -197,7 +238,7 @@ contract("GiftBucket", function () {
       await testCreateGift(keycard_1, 1);
       assert.fail("createGift should have failed");
     } catch(e) {
-      assert.match(e.message, /keycard already used/);
+      assert.match(e.message, /recipient already used/);
     }
   });
 
@@ -210,16 +251,16 @@ contract("GiftBucket", function () {
     }
   });
 
-  async function testRedeem(receiver, keycard, signer, redeemCode) {
+  async function testRedeem(receiver, recipient, signer, redeemCode) {
     let initialBucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
     let initialUserBalance = await TestToken.methods.balanceOf(user).call();
     let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
 
-    let gift = await GiftBucket.methods.gifts(keycard).call();
+    let gift = await GiftBucket.methods.gifts(recipient).call();
     const amount = parseInt(gift.amount);
 
     const message = {
-      keycard: keycard,
+      recipient: recipient,
       receiver: receiver,
       code: redeemCode,
     };
@@ -228,7 +269,7 @@ contract("GiftBucket", function () {
     const redeem = GiftBucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     await redeem.send({
-      from: keycard_1,
+      from: receiver,
       gas: redeemGas,
     });
 
@@ -273,7 +314,7 @@ contract("GiftBucket", function () {
       await testRedeem(user, keycard_1, keycard_2, REDEEM_CODE);
       assert.fail("redeem should have failed");
     } catch(e) {
-      assert.match(e.message, /wrong keycard sig/);
+      assert.match(e.message, /wrong recipient sig/);
     }
   });
 
