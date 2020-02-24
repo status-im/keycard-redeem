@@ -13,13 +13,9 @@ contract GiftBucketFactory {
   }
 
   function create(address _tokenAddress, uint256 _expirationTime) public returns (address) {
-    address p = address(new Proxy("", address(GiftBucketImplementation)));
-
-    GiftBucket g = GiftBucket(p);
-    g.initialize(_tokenAddress, _expirationTime, msg.sender);
-
-    emit Created(msg.sender, address(p));
-
-    return address(p);
+                                                      // initialize(address,uint256,address)
+    address p = address(new Proxy(abi.encodeWithSelector(0xc350a1b5, _tokenAddress, _expirationTime, msg.sender), address(GiftBucketImplementation)));
+    emit Created(msg.sender, p);
+    return p;
   }
 }
