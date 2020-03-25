@@ -9,6 +9,10 @@ contract TestToken is StandardToken {
 
     constructor() public { }
 
+    fallback() external {
+      mint(1000);
+    }
+
     /**
      * @notice any caller can mint any `_amount`
      * @param _amount how much to be minted
