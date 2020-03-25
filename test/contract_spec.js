@@ -8,6 +8,7 @@ const GIFT_AMOUNT = 10;
 const REDEEM_CODE = web3.utils.sha3("hello world");
 const NOW = Math.round(new Date().getTime() / 1000);
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
+const NEW_EXPIRATION_TIME = EXPIRATION_TIME + 60;
 
 let shop,
     user,
@@ -117,14 +118,24 @@ contract("GiftBucket", function () {
 
   sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
 
-  // it("deploy factory", async () => {
-  //   // only to test gas
-  //   await GiftBucketFactory.deploy([]);
-  // });
+  it("deploy factory", async () => {
+    // only to test gas
+    const deploy = GiftBucketFactory.deploy({
+      arguments: []
+    });
+
+    const gas = await deploy.estimateGas();
+    await deploy.send({ gas })
+  });
 
   it("deploy bucket", async () => {
     // only to test gas
-    await _GiftBucket.deploy([TestToken._address, EXPIRATION_TIME]);
+    const deploy = _GiftBucket.deploy({
+      arguments: [TestToken._address, EXPIRATION_TIME]
+    });
+
+    const gas = await deploy.estimateGas();
+    await deploy.send({ gas })
   });
 
   it("deploy bucket via factory", async () => {
@@ -141,15 +152,6 @@ contract("GiftBucket", function () {
       abi: jsonInterface,
       address: bucketAddress,
     });
-
-    // const deploy = await _GiftBucket.deploy({
-    //   arguments: [TestToken._address, EXPIRATION_TIME],
-    // });
-    // gas = await deploy.estimateGas();
-    // await deploy.send({
-    //   from: shop,
-    //   gas: gas,
-    // });
   });
 
   it("shop buys 100 tokens", async function () {
