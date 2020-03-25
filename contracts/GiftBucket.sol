@@ -22,7 +22,6 @@ contract GiftBucket {
   mapping(address => Gift) public gifts;
 
   struct Redeem {
-    address recipient;
     address receiver;
     bytes32 code;
   }
@@ -30,7 +29,7 @@ contract GiftBucket {
   uint256 public redeemableSupply;
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address recipient,address receiver,bytes32 code)");
+  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address receiver,bytes32 code)");
   bytes32 DOMAIN_SEPARATOR;
 
   modifier onlyOwner() {
@@ -102,11 +101,10 @@ contract GiftBucket {
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
     require(block.timestamp < expirationTime, "expired gift");
 
-    Gift storage gift = gifts[_redeem.recipient];
-    require(gift.amount > 0, "not found");
+    address recipient = verifySig(_redeem, sig);
 
-    bool signedByKeycard = verifySig(_redeem, sig);
-    require(signedByKeycard, "wrong recipient sig");
+    Gift storage gift = gifts[recipient];
+    require(gift.amount > 0, "not found");
 
     bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
     require(codeHash == gift.code, "invalid code");
@@ -132,13 +130,12 @@ contract GiftBucket {
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {
     return keccak256(abi.encode(
       REDEEM_TYPEHASH,
-      _redeem.recipient,
       _redeem.receiver,
       _redeem.code
     ));
   }
 
-  function verifySig(Redeem memory _redeem, bytes memory sig) internal view returns(bool) {
+  function verifySig(Redeem memory _redeem, bytes memory sig) internal view returns(address) {
     require(sig.length == 65, "bad signature length");
 
     bytes32 r;
@@ -163,6 +160,6 @@ contract GiftBucket {
         hashRedeem(_redeem)
     ));
 
-    return ecrecover(digest, v, r, s) == _redeem.recipient;
+    return ecrecover(digest, v, r, s);
   }
 }

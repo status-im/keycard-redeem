@@ -53,7 +53,6 @@ async function signRedeem(contractAddress, signer, message) {
   ];
 
   let redeem = [
-    { name: "recipient", type: "address" },
     { name: "receiver", type: "address" },
     { name: "code", type: "bytes32" },
   ];
@@ -264,7 +263,6 @@ contract("GiftBucket", function () {
     const amount = parseInt(gift.amount);
 
     const message = {
-      recipient: recipient,
       receiver: receiver,
       code: redeemCode,
     };
@@ -312,13 +310,13 @@ contract("GiftBucket", function () {
     }
   });
 
-  it("cannot redeem with invalid signature", async function() {
+  it("cannot redeem with invalid recipient", async function() {
     await mineAt(NOW);
     try {
       await testRedeem(user, keycard_1, keycard_2, relayer, REDEEM_CODE);
       assert.fail("redeem should have failed");
     } catch(e) {
-      assert.match(e.message, /wrong recipient sig/);
+      assert.match(e.message, /not found/);
     }
   });
 
