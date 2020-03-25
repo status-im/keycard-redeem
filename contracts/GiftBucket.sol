@@ -101,7 +101,7 @@ contract GiftBucket {
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
     require(block.timestamp < expirationTime, "expired gift");
 
-    address recipient = verifySig(_redeem, sig);
+    address recipient = recoverSigner(_redeem, sig);
 
     Gift storage gift = gifts[recipient];
     require(gift.amount > 0, "not found");
@@ -135,7 +135,7 @@ contract GiftBucket {
     ));
   }
 
-  function verifySig(Redeem memory _redeem, bytes memory sig) internal view returns(address) {
+  function recoverSigner(Redeem memory _redeem, bytes memory sig) internal view returns(address) {
     require(sig.length == 65, "bad signature length");
 
     bytes32 r;
