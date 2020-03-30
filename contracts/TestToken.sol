@@ -6,18 +6,32 @@ import "./StandardToken.sol";
  * @notice ERC20Token for test scripts, can be minted by anyone.
  */
 contract TestToken is StandardToken {
+  string private _symbol;
+  uint256 private _decimals;
 
-    constructor() public { }
+  constructor(string memory symbol, uint256 decimals) public {
+    _symbol = symbol;
+    _decimals = decimals;
+  }
 
-    fallback() external {
-      mint(1000);
-    }
+  fallback() external {
+    uint256 amount = 5000;
+    mint(amount * uint256(10)**_decimals);
+  }
 
-    /**
-     * @notice any caller can mint any `_amount`
-     * @param _amount how much to be minted
-     */
-    function mint(uint256 _amount) public {
-        mint(msg.sender, _amount);
-    }
+  function symbol() public view returns (string memory) {
+    return _symbol;
+  }
+
+  function decimals() public view returns (uint256) {
+    return _decimals;
+  }
+
+  /**
+   * @notice any caller can mint any `_amount`
+   * @param _amount how much to be minted
+   */
+  function mint(uint256 _amount) public {
+    mint(msg.sender, _amount);
+  }
 }

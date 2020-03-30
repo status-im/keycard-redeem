@@ -20,7 +20,7 @@ config({
   contracts: {
     deploy: {
       "TestToken": {
-        args: [],
+        args: ["TEST", 18],
       },
       "GiftBucket": {
         args: ["$TestToken", EXPIRATION_TIME],

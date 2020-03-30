@@ -1,8 +1,8 @@
 pragma solidity ^0.6.1;
 
-import "./ERC20Token.sol";
+import "./IERC20.sol";
 
-contract StandardToken is ERC20Token {
+contract StandardToken is IERC20 {
 
     uint256 private supply;
     mapping (address => uint256) balances;
@@ -15,7 +15,7 @@ contract StandardToken is ERC20Token {
         uint256 _value
     )
         external
-        override(ERC20Token)
+        override(IERC20)
         returns (bool success)
     {
         return transfer(msg.sender, _to, _value);
@@ -23,7 +23,7 @@ contract StandardToken is ERC20Token {
 
     function approve(address _spender, uint256 _value)
         external
-        override(ERC20Token)
+        override(IERC20)
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -37,7 +37,7 @@ contract StandardToken is ERC20Token {
         uint256 _value
     )
         external
-        override(ERC20Token)
+        override(IERC20)
         returns (bool success)
     {
         if (balances[_from] >= _value &&
@@ -53,7 +53,7 @@ contract StandardToken is ERC20Token {
     function allowance(address _owner, address _spender)
         external
         view
-        override(ERC20Token)
+        override(IERC20)
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];
@@ -62,7 +62,7 @@ contract StandardToken is ERC20Token {
     function balanceOf(address _owner)
         external
         view
-        override(ERC20Token)
+        override(IERC20)
         returns (uint256 balance)
     {
         return balances[_owner];
@@ -71,7 +71,7 @@ contract StandardToken is ERC20Token {
     function totalSupply()
         external
         view
-        override(ERC20Token)
+        override(IERC20)
         returns(uint256 currentTotalSupply)
     {
         return supply;
