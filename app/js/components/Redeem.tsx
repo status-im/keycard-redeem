@@ -12,9 +12,7 @@ import {
   ERROR_LOADING_GIFT,
   ERROR_GIFT_NOT_FOUND,
 } from '../actions/bucket';
-import Web3Utils from "web3-utils";
-
-const BN = Web3Utils.BN;
+import { toBaseUnit } from "../utils";
 
 const errorMessage = (error: BucketError): string => {
   switch (error.type) {
@@ -27,21 +25,6 @@ const errorMessage = (error: BucketError): string => {
     default:
       return "something went wrong";
   }
-}
-
-const toBaseUnit = (fullAmount: string, decimalsSize: number, roundDecimals: number) => {
-  const amount = new BN(fullAmount);
-  const base = new BN(10).pow(new BN(decimalsSize));
-  const whole = amount.div(base).toString();
-  let decimals = amount.mod(base).toString();
-  for (let i = decimals.length; i < decimalsSize; i++) {
-    decimals = `0${decimals}`;
-  }
-
-  const full = `${whole}.${decimals}`;
-  const rounded = `${whole}.${decimals.slice(0, roundDecimals)}`;
-
-  return [full, rounded];
 }
 
 export default function(ownProps: any) {
@@ -99,5 +82,7 @@ export default function(ownProps: any) {
     Display Amount: {displayAmount} <br />
     Rounded Display Amount: {roundedDisplayAmount} <br />
     Receiver: {props.receiver} <br />
+
+    <br /><br /><br />
   </>;
 }
