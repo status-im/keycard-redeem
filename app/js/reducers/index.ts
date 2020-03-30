@@ -14,7 +14,6 @@ export interface RootState {
   bucket: BucketState,
 }
 
-
 export default function(history) {
   return combineReducers({
     web3: web3Reducer,

@@ -30,9 +30,12 @@ module.exports = {
     // filteredFields: [],
 
     deploy: {
-      GiftBucket: {
-        deploy: false,
-      }
+      TestToken: {
+        args: ["TEST", 18],
+      },
+      GiftBucketFactory: {
+        params: [],
+      },
     }
   },
 
