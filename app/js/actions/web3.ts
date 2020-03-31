@@ -84,7 +84,7 @@ export const initializeWeb3 = () => {
             }
 
             dispatch(web3NetworkIDLoaded(id))
-            dispatch(loadAddress());
+            dispatch<any>(loadAddress());
           });
         })
         .catch((err: string) => {
@@ -96,7 +96,7 @@ export const initializeWeb3 = () => {
       dispatch(web3Initialized(t));
       config.web3!.eth.net.getId().then((id: number) => {
         dispatch(web3NetworkIDLoaded(id))
-        dispatch(loadAddress());
+        dispatch<any>(loadAddress());
       })
       .catch((err: string) => {
         //FIXME: handle error
@@ -110,7 +110,7 @@ export const initializeWeb3 = () => {
 
 const loadAddress = () => {
   return (dispatch: Dispatch, getState: () => RootState) => {
-    web3.eth.getAccounts().then((accounts: string[]) => {
+    config.web3!.eth.getAccounts().then((accounts: string[]) => {
       dispatch(accountLoaded(accounts[0]));
     });
   };
