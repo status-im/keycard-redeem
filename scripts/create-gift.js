@@ -63,7 +63,7 @@ async function deployBucket(sender, factory, token, validityInDays) {
     let methodCall = GiftBucketFactory.methods.create(token.toLowerCase(), expirationDate);
 
     try {
-        let receipt = await sendMethod(methodCall, sender, null);
+        let receipt = await sendMethod(methodCall, sender, GiftBucketFactory.options.address);
         return receipt.events.Created.returnValues.bucket;
     } catch(err) {
         console.error(err);
@@ -73,19 +73,19 @@ async function deployBucket(sender, factory, token, validityInDays) {
 
 async function createGift(sender, bucket, keycard) {
     GiftBucket.options.address = bucket;
-    let methodCall = GiftBucket.methods.createGift(keycard.keycard.toLowerCase(), keycard.amount, keycard.code);
+    let methodCall = GiftBucket.methods.createGift(keycard.keycard, keycard.amount, keycard.code);
 
     try {
-        let receipt = await sendMethod(methodCall, sender, null);
-        return receipt.events.Created.returnValues.bucket;
+        await sendMethod(methodCall, sender, GiftBucket.options.address);
+        return true;
     } catch(err) {
         console.error(err);
-        return null;
+        return false;
     }
 }
 
 function processLine(line) {
-    let c = line.split(",").map((e) => e.trim());
+    let c = line.split(",").map((e) => e.toLowerCase().trim());
     return {keycard: c[0], amount: parseInt(c[1]), code: c[2]};
 }
 
