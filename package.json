@@ -11,6 +11,7 @@
   "dependencies": {
     "connected-react-router": "^6.7.0",
     "esm": "^3.2.25",
+    "eth-sig-util": "^2.5.3",
     "history": "^4.10.1",
     "minimist": "^1.2.0",
     "react": "^16.12.0",

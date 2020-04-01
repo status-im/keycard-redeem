@@ -11,10 +11,11 @@ export const VALID_NETWORK_ID = 3;
 // export const VALID_NETWORK_ID = 5;
 export const LOCAL_NETWORK_ID = 1337;
 
-enum Web3Type {
+export enum Web3Type {
+  None,
   Generic,
   Remote,
-  Status,
+  Status
 }
 
 export const WEB3_INITIALIZED = "WEB3_INITIALIZED";

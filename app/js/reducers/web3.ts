@@ -4,6 +4,7 @@ import {
   WEB3_ERROR,
   WEB3_NETWORK_ID_LOADED,
   WEB3_ACCOUNT_LOADED,
+  Web3Type,
 } from '../actions/web3';
 
 export interface Web3State {
@@ -11,6 +12,7 @@ export interface Web3State {
   networkID: number | undefined
   error: string | undefined
   account: string | undefined
+  type: Web3Type
 }
 
 const initialState: Web3State = {
@@ -18,6 +20,7 @@ const initialState: Web3State = {
   networkID: undefined,
   error: undefined,
   account: undefined,
+  type: Web3Type.None,
 };
 
 export const web3Reducer = (state: Web3State = initialState, action: Web3Actions): Web3State => {
@@ -26,6 +29,7 @@ export const web3Reducer = (state: Web3State = initialState, action: Web3Actions
       return {
         ...state,
         initialized: true,
+        type: action.web3Type,
       }
     }
 

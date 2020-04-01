@@ -1,6 +1,6 @@
 import {
   BucketActions,
-  BucketError,
+  BucketErrors,
   BUCKET_GIFT_LOADING,
   BUCKET_GIFT_NOT_FOUND,
   BUCKET_GIFT_LOADED,
@@ -11,9 +11,11 @@ import {
 export interface BucketState {
   loading: boolean
   address: string | undefined
+  expirationTime: number | undefined
   tokenAddress: string | undefined
+  tokenSymbol: string | undefined
   tokenDecimals: number | undefined
-  error: BucketState | undefined
+  error: BucketErrors | undefined
   recipient: string | undefined
   amount: string | undefined
   codeHash: string | undefined
@@ -22,7 +24,9 @@ export interface BucketState {
 const initialState: BucketState = {
   loading: false,
   address: undefined,
+  expirationTime: undefined,
   tokenAddress: undefined,
+  tokenSymbol: undefined,
   tokenDecimals: undefined,
   error: undefined,
   recipient: undefined,
@@ -37,6 +41,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
         ...initialState,
         loading: true,
         address: action.address,
+        recipient: action.recipient,
       }
     }
 
@@ -52,6 +57,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       return {
         ...state,
         loading: false,
+        expirationTime: action.expirationTime,
         recipient: action.recipient,
         amount: action.amount,
         codeHash: action.codeHash,

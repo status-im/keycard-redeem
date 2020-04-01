@@ -8,10 +8,15 @@ import {
   BucketState,
   bucketReducer,
 } from './bucket';
+import {
+  RedeemState,
+  redeemReducer,
+} from './redeem';
 
 export interface RootState {
   web3: Web3State,
   bucket: BucketState,
+  redeem: RedeemState,
 }
 
 export default function(history) {
@@ -19,5 +24,6 @@ export default function(history) {
     web3: web3Reducer,
     router: connectRouter(history),
     bucket: bucketReducer,
+    redeem: redeemReducer,
   });
 }

@@ -43,29 +43,29 @@ let sendMethod;
 async function signRedeem(contractAddress, signer, message) {
   const result = await web3.eth.net.getId();
   let chainId = parseInt(result);
-  //FIXME: getChainID in the contract returns 1 so we hardcode it here to 1.
+  //FIXME: in tests, getChainID in the contract returns 1 so we hardcode it here to 1.
   chainId = 1;
 
-  let domain = [
+  const domain = [
     { name: "name", type: "string" },
     { name: "version", type: "string" },
     { name: "chainId", type: "uint256" },
     { name: "verifyingContract", type: "address" }
   ];
 
-  let redeem = [
+  const redeem = [
     { name: "receiver", type: "address" },
     { name: "code", type: "bytes32" },
   ];
 
-  let domainData = {
+  const domainData = {
     name: "KeycardGift",
     version: "1",
     chainId: chainId,
     verifyingContract: contractAddress
   };
 
-  let data = {
+  const data = {
     types: {
       EIP712Domain: domain,
       Redeem: redeem,

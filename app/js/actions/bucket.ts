@@ -16,14 +16,15 @@ export interface ErrLoadingGift {
   message: string
 }
 
-export type BucketError =
-  ErrGiftNotFound;
+export type BucketErrors =
+  ErrGiftNotFound |
+  ErrLoadingGift;
 
-const errGiftNotFound = () => ({
+const errGiftNotFound = (): ErrGiftNotFound => ({
   type: ERROR_GIFT_NOT_FOUND,
 });
 
-const errLoadingGift = (message: string) => ({
+const errLoadingGift = (message: string): ErrLoadingGift => ({
   type: ERROR_LOADING_GIFT,
   message,
 });
@@ -32,17 +33,19 @@ export const BUCKET_GIFT_LOADING = "BUCKET_GIFT_LOADING";
 export interface BucketGiftLoadingAction {
   type: typeof BUCKET_GIFT_LOADING
   address: string
+  recipient: string
 }
 
 export const BUCKET_GIFT_LOADING_ERROR = "BUCKET_GIFT_LOADING_ERROR";
 export interface BucketGiftLoadingErrorAction {
   type: typeof BUCKET_GIFT_LOADING_ERROR
-  error: BucketError
+  error: ErrLoadingGift
 }
 
 export const BUCKET_GIFT_LOADED = "BUCKET_GIFT_LOADED";
 export interface BucketGiftLoadedAction {
   type: typeof BUCKET_GIFT_LOADED
+  expirationTime: number
   recipient: string
   amount: string
   codeHash: string
@@ -51,7 +54,7 @@ export interface BucketGiftLoadedAction {
 export const BUCKET_GIFT_NOT_FOUND = "BUCKET_GIFT_NOT_FOUND";
 export interface BucketGiftNotFoundAction {
   type: typeof BUCKET_GIFT_NOT_FOUND
-  error: BucketError
+  error: ErrGiftNotFound
 }
 
 export const BUCKET_TOKEN_LOADING = "BUCKET_TOKEN_LOADING";
@@ -64,7 +67,7 @@ export const BUCKET_TOKEN_LOADED = "BUCKET_TOKEN_LOADED";
 export interface BucketTokenLoadedAction {
   type: typeof BUCKET_TOKEN_LOADED
   symbol: string
-  decimal: number
+  decimals: number
 }
 
 export type BucketActions =
@@ -75,25 +78,27 @@ export type BucketActions =
   BucketTokenLoadingAction |
   BucketTokenLoadedAction;
 
-export const loadingGift = (address: string): BucketLoadingAction => ({
+export const loadingGift = (address: string, recipient: string): BucketGiftLoadingAction => ({
   type: BUCKET_GIFT_LOADING,
   address,
+  recipient,
 });
 
-export const giftLoaded = (recipient: string, amount: string, codeHash: string): BucketGiftLoadedAction => ({
+export const giftLoaded = (expirationTime: number, recipient: string, amount: string, codeHash: string): BucketGiftLoadedAction => ({
   type: BUCKET_GIFT_LOADED,
+  expirationTime,
   recipient,
   amount,
   codeHash,
 });
 
-export const giftNotFound = (recipient: string, amount: string, codeHash: string): BucketGiftNotFoundAction => ({
+export const giftNotFound = (): BucketGiftNotFoundAction => ({
   type: BUCKET_GIFT_NOT_FOUND,
   error: errGiftNotFound(),
 });
 
-export const errorLoadingGift = (errorMessage: string): BucketGiftNotFoundAction => ({
-  type: BUCKET_GIFT_NOT_FOUND,
+export const errorLoadingGift = (errorMessage: string): BucketGiftLoadingErrorAction => ({
+  type: BUCKET_GIFT_LOADING_ERROR,
   error: errLoadingGift(errorMessage),
 });
 
@@ -108,7 +113,7 @@ export const tokenLoaded = (symbol: string, decimals: number): BucketTokenLoaded
   decimals,
 });
 
-const newBucketContract = (address: string) => {
+export const newBucketContract = (address: string) => {
   const bucketAbi = GiftBucket.options.jsonInterface;
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
@@ -124,16 +129,16 @@ export const loadGift = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     dispatch(loadingGift(bucketAddress, recipientAddress));
     const bucket = newBucketContract(bucketAddress);
-
-    bucket.methods.gifts(recipientAddress).call().then((result: Any) => {
+    const expirationTime = await bucket.methods.expirationTime().call();
+    bucket.methods.gifts(recipientAddress).call().then((result: any) => {
       const { recipient, amount, code } = result;
       if (amount === "0") {
         dispatch(giftNotFound())
         return;
       }
 
-      dispatch(giftLoaded(recipient, amount, code));
-      dispatch(loadToken(bucket))
+      dispatch(giftLoaded(expirationTime, recipient, amount, code));
+      dispatch<any>(loadToken(bucket))
     }).catch(err => {
       dispatch(errorLoadingGift(err))
       console.error("err: ", err)
