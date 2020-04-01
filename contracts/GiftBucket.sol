@@ -1,7 +1,7 @@
 pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
-import "./ERC20Token.sol";
+import "./IERC20.sol";
 
 contract GiftBucket {
 
@@ -9,7 +9,7 @@ contract GiftBucket {
 
   address payable public owner;
 
-  ERC20Token public tokenContract;
+  IERC20 public tokenContract;
 
   uint256 public expirationTime;
 
@@ -46,7 +46,7 @@ contract GiftBucket {
 
     require(_expirationTime > block.timestamp, "expiration can't be in the past");
 
-    tokenContract = ERC20Token(_tokenAddress);
+    tokenContract = IERC20(_tokenAddress);
     expirationTime = _expirationTime;
     owner = payable(_owner);
 

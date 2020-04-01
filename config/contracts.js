@@ -3,8 +3,8 @@ module.exports = {
   default: {
     // order of connections the dapp should connect to
     dappConnection: [
-      "$EMBARK",
       "$WEB3",  // uses pre existing web3 object if available (e.g in Mist)
+      "$EMBARK",
       "ws://localhost:8546",
       "http://localhost:8545"
     ],
@@ -22,7 +22,7 @@ module.exports = {
     //            when not specified
     // - explicit will only attempt to deploy the contracts that are explicitly specified inside the
     //            contracts section.
-    // strategy: 'implicit',
+    strategy: 'explicit',
 
     // minimalContractSize, when set to true, tells Embark to generate contract files without the heavy bytecodes
     // Using filteredFields lets you customize which field you want to filter out of the contract file (requires minimalContractSize: true)
@@ -30,9 +30,12 @@ module.exports = {
     // filteredFields: [],
 
     deploy: {
-      GiftBucket: {
-        deploy: false,
-      }
+      TestToken: {
+        args: ["TEST", 18],
+      },
+      GiftBucketFactory: {
+        params: [],
+      },
     }
   },
 

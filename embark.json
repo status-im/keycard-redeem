@@ -2,7 +2,7 @@
   "contracts": ["contracts/**"],
   "app": {
     "css/app.css": ["app/css/**"],
-    "js/app.js": ["app/js/index.js"],
+    "js/app.js": ["app/js/index.tsx"],
     "images/": ["app/images/**"],
     "index.html": "app/index.html"
   },
@@ -12,6 +12,13 @@
     "solc": "0.6.1"
   },
   "plugins": {
+    "embark-ipfs": {},
+    "embark-swarm": {},
+    "embark-whisper-geth": {},
+    "embark-geth": {},
+    "embark-parity": {},
+    "embark-profiler": {},
+    "embark-graph": {}
   },
   "options": {
     "solc": {
