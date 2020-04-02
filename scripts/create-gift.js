@@ -4,7 +4,7 @@ import Web3 from 'web3';
 import parseArgs from 'minimist';
 import fs from 'fs';
 
-const argv = parseArgs(process.argv.slice(2), {boolean: ["deploy-factory", "deploy-bucket"], string: ["factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "validity-days": 365}});
+const argv = parseArgs(process.argv.slice(2), {boolean: ["deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "validity-days": 365}});
 
 const web3 = new Web3(argv["endpoint"]);
 
