@@ -54,6 +54,8 @@ async function signRedeem(contractAddress, signer, message) {
   ];
 
   const redeem = [
+    { name: "blockNumber", type: "uint256" },
+    { name: "blockHash", type: "bytes32" },
     { name: "receiver", type: "address" },
     { name: "code", type: "bytes32" },
   ];
@@ -256,7 +258,7 @@ contract("GiftBucket", function () {
     }
   });
 
-  async function testRedeem(receiver, recipient, signer, relayer, redeemCode) {
+  async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
     let initialBucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
     let initialUserBalance = await TestToken.methods.balanceOf(user).call();
     let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
@@ -265,6 +267,8 @@ contract("GiftBucket", function () {
     const amount = parseInt(gift.amount);
 
     const message = {
+      blockNumber: blockNumber,
+      blockHash: blockHash,
       receiver: receiver,
       code: redeemCode,
     };
@@ -293,9 +297,11 @@ contract("GiftBucket", function () {
   }
 
   it("cannot redeem after expiration date", async function() {
+    const block = await web3.eth.getBlock("latest");
     await mineAt(EXPIRATION_TIME);
+
     try {
-      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE);
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, block.hash);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /expired/);
@@ -303,9 +309,10 @@ contract("GiftBucket", function () {
   });
 
   it("cannot redeem with invalid code", async function() {
+    const block = await web3.eth.getBlock("latest");
     await mineAt(NOW);
     try {
-      await testRedeem(user, keycard_1, keycard_1, relayer, web3.utils.sha3("bad-code"));
+      await testRedeem(user, keycard_1, keycard_1, relayer, web3.utils.sha3("bad-code"), block.number, block.hash);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /invalid code/);
@@ -313,18 +320,53 @@ contract("GiftBucket", function () {
   });
 
   it("cannot redeem with invalid recipient", async function() {
+    const block = await web3.eth.getBlock("latest");
     await mineAt(NOW);
     try {
-      await testRedeem(user, keycard_1, keycard_2, relayer, REDEEM_CODE);
+      await testRedeem(user, keycard_1, keycard_2, relayer, REDEEM_CODE, block.number, block.hash);
       assert.fail("redeem should have failed");
     } catch(e) {
       assert.match(e.message, /not found/);
     }
   });
 
-  it("can redeem before expiration date", async function() {
+  it("cannot redeem with a block in the future", async function() {
+    const block = await web3.eth.getBlock("latest");
     await mineAt(NOW);
-    await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE);
+    try {
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, (block.number + 2), "0x0000000000000000000000000000000000000000000000000000000000000000");
+    } catch (e) {
+      assert.match(e.message, /future/);
+    }
+  });
+
+  it("cannot redeem with an old block", async function() {
+    const currentBlock = await web3.eth.getBlock("latest");
+    const block = await web3.eth.getBlock(currentBlock.number - 10);
+
+    await mineAt(NOW);
+    try {
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, block.hash);
+    } catch (e) {
+      assert.match(e.message, /too old/);
+    }
+  });
+
+  it("cannot redeem with an invalid hash", async function() {
+    const block = await web3.eth.getBlock("latest");
+
+    await mineAt(NOW);
+    try {
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, "0x0000000000000000000000000000000000000000000000000000000000000000");
+    } catch (e) {
+      assert.match(e.message, /invalid block hash/);
+    }
+  });  
+
+  it("can redeem before expiration date", async function() {
+    const block = await web3.eth.getBlock("latest");
+    await mineAt(NOW);
+    await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, block.hash);
   });
 
   async function testKill() {
