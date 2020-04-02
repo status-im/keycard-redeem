@@ -76,11 +76,11 @@ async function createGift(sender, bucket, keycard) {
     let methodCall = GiftBucket.methods.createGift(keycard.keycard, keycard.amount, keycard.code);
 
     try {
-        await sendMethod(methodCall, sender, GiftBucket.options.address);
-        return true;
+        let receipt = await sendMethod(methodCall, sender, GiftBucket.options.address);
+        return receipt;
     } catch(err) {
         console.error(err);
-        return false;
+        return null;
     }
 }
 
@@ -151,7 +151,9 @@ async function run() {
     if (argv["file"]) {
         let file = fs.readFileSync(argv["file"], 'utf8');
         keycards = file.split("\n").map(processLine);
-        await Promise.all(keycards.map((keycard) => createGift(sender, bucket, keycard)));
+        for (let keycard of keycards) {
+            await createGift(sender, bucket, keycard)
+        }
     } else if (!hasDoneSomething) {
         console.error("the --file option must be specified");
         process.exit(0);
