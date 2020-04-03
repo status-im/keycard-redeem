@@ -132,6 +132,13 @@ interface SignRedeemResponse {
 
 async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage): Promise<SignRedeemResponse> {
   const chainId = await config.web3!.eth.net.getId();
+  const block = await config.web3!.eth.getBlock("latest");
+  const finalMessage = {
+    ...message,
+    blockNumber: block.number, 
+    blockHash: block.hash
+  };
+
   const domain = [
     { name: "name", type: "string" },
     { name: "version", type: "string" },
@@ -140,6 +147,8 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   ];
 
   const redeem = [
+    { name: "blockNumber", type: "uint256" },
+    { name: "blockHash", type: "bytes32" },
     { name: "receiver", type: "address" },
     { name: "code", type: "bytes32" },
   ];
@@ -158,7 +167,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
     },
     primaryType: ("Redeem" as const),
     domain: domainData,
-    message: message
+    message: finalMessage
   };
 
   if (web3Type === Web3Type.Status) {

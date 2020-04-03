@@ -13,6 +13,8 @@ contract GiftBucket {
 
   uint256 public expirationTime;
 
+  uint256 constant maxTxDelayInBlocks = 10;
+
   struct Gift {
     address recipient;
     uint256 amount;
@@ -22,6 +24,8 @@ contract GiftBucket {
   mapping(address => Gift) public gifts;
 
   struct Redeem {
+    uint256 blockNumber;
+    bytes32 blockHash;
     address receiver;
     bytes32 code;
   }
@@ -29,7 +33,7 @@ contract GiftBucket {
   uint256 public redeemableSupply;
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(address receiver,bytes32 code)");
+  bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(uint256 blockNumber,bytes32 blockHash,address receiver,bytes32 code)");
   bytes32 DOMAIN_SEPARATOR;
 
   modifier onlyOwner() {
@@ -99,6 +103,10 @@ contract GiftBucket {
   }
 
   function redeem(Redeem calldata _redeem, bytes calldata sig) external {
+    require(_redeem.blockNumber < block.number, "transaction cannot be in the future");
+    require(_redeem.blockNumber >= (block.number - maxTxDelayInBlocks), "transaction too old");
+    require(_redeem.blockHash == blockhash(_redeem.blockNumber), "invalid block hash");
+
     require(block.timestamp < expirationTime, "expired gift");
 
     address recipient = recoverSigner(_redeem, sig);
@@ -130,6 +138,8 @@ contract GiftBucket {
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {
     return keccak256(abi.encode(
       REDEEM_TYPEHASH,
+      _redeem.blockNumber,
+      _redeem.blockHash,
       _redeem.receiver,
       _redeem.code
     ));
