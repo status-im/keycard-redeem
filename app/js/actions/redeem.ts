@@ -17,6 +17,13 @@ const sleep = (ms: number) => {
 interface RedeemMessage {
   receiver: string
   code: string
+  blockNumber:  number
+  blockHash:  string
+}
+
+interface SignRedeemResponse {
+  sig: string
+  address: string
 }
 
 export const ERROR_REDEEMING = "ERROR_REDEEMING";
@@ -85,7 +92,7 @@ const redeemDone = (txHash: string) => ({
 });
 
 export const redeem = (bucketAddress: string, recipientAddress: string, code: string) => {
-  return (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch, getState: () => RootState) => {
     dispatch(redeeming());
     const state = getState();
     const web3Type = state.web3.type;
@@ -93,10 +100,13 @@ export const redeem = (bucketAddress: string, recipientAddress: string, code: st
     const bucket = newBucketContract(bucketAddress);
     const codeHash = sha3(code);
     const account = state.web3.account;
+    const block = await config.web3!.eth.getBlock("latest");
 
     const message = {
       receiver: state.web3.account,
       code: codeHash,
+      blockNumber: block.number,
+      blockHash:  block.hash,
     };
 
     //FIXME: is signer needed?
@@ -104,6 +114,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, code: st
       const recipient = state.bucket.recipient;
       //FIXME: remove! hack to wait for the request screen to slide down
       await sleep(3000);
+
       if (address.toLowerCase() != recipient.toLowerCase()) {
         //FIXME: handle error
         dispatch(wrongSigner(recipient, address));
@@ -125,19 +136,8 @@ export const redeem = (bucketAddress: string, recipientAddress: string, code: st
   }
 }
 
-interface SignRedeemResponse {
-  sig: string
-  address: string
-}
-
 async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage): Promise<SignRedeemResponse> {
   const chainId = await config.web3!.eth.net.getId();
-  const block = await config.web3!.eth.getBlock("latest");
-  const finalMessage = {
-    ...message,
-    blockNumber: block.number, 
-    blockHash: block.hash
-  };
 
   const domain = [
     { name: "name", type: "string" },
@@ -167,7 +167,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
     },
     primaryType: ("Redeem" as const),
     domain: domainData,
-    message: finalMessage
+    message: message,
   };
 
   if (web3Type === Web3Type.Status) {
@@ -177,7 +177,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   }
 }
 
-const signWithWeb3 = (signer: string, data: any) => {
+const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> => {
   return new Promise((resolve, reject) => {
     (window as any).ethereum.sendAsync({
       method: "eth_signTypedData_v3",
@@ -199,7 +199,7 @@ const signWithWeb3 = (signer: string, data: any) => {
   });
 }
 
-const signWithKeycard = (signer: string, data: any) => {
+const signWithKeycard = (signer: string, data: any): Promise<SignRedeemResponse> => {
   return new Promise((resolve, reject) => {
     (window as any).ethereum.send("keycard_signTypedData", [signer, JSON.stringify(data)]).then(resp => {
       const sig = resp.result;
