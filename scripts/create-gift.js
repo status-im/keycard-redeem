@@ -64,7 +64,7 @@ async function deployBucket(sender, factory, token, validityInDays) {
 
     try {
         let receipt = await sendMethod(methodCall, sender, GiftBucketFactory.options.address);
-        return receipt.events.Created.returnValues.bucket;
+        return receipt.events.BucketCreated.returnValues.bucket;
     } catch(err) {
         console.error(err);
         return null;
