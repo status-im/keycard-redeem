@@ -1,7 +1,7 @@
 pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
-import "./IERC20.sol";
+import "./erc20/IERC20.sol";
 
 contract GiftBucket {
 
