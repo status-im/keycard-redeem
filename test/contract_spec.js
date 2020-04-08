@@ -148,7 +148,7 @@ contract("GiftBucket", function () {
       gas: gas,
     });
 
-    const bucketAddress = receipt.events.Created.returnValues.bucket;
+    const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
     const jsonInterface = _GiftBucket.options.jsonInterface;
     GiftBucket = new EmbarkJS.Blockchain.Contract({
       abi: jsonInterface,

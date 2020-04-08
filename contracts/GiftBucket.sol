@@ -92,7 +92,7 @@ contract GiftBucket {
     require(_availableSupply >= amount, "low supply");
 
     Gift storage gift = gifts[recipient];
-    require(gift.amount == 0, "recipient already used");
+    require(gift.recipient == address(0), "recipient already used");
 
     gift.recipient = recipient;
     gift.amount = amount;
@@ -112,7 +112,7 @@ contract GiftBucket {
     address recipient = recoverSigner(_redeem, sig);
 
     Gift storage gift = gifts[recipient];
-    require(gift.amount > 0, "not found");
+    require(gift.recipient == recipient, "not found");
 
     bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
     require(codeHash == gift.code, "invalid code");
