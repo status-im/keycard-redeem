@@ -3,7 +3,7 @@ pragma solidity ^0.6.1;
 import "./NFTBucket.sol";
 import "./Proxy.sol";
 
-contract GiftBucketFactory {
+contract NFTBucketFactory {
   NFTBucket public NFTBucketImplementation;
 
   event BucketCreated(address indexed gifter, address indexed bucket);
