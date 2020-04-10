@@ -93,7 +93,7 @@ contract NFTBucket is IERC165, IERC721Receiver {
     bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
     require(codeHash == gift.code, "invalid code");
 
-    tokenContract.safeTransferFrom(address(this), gift.recipient, gift.tokenID);
+    tokenContract.safeTransferFrom(address(this), _redeem.receiver, gift.tokenID);
   }
 
   function kill() external onlyOwner {
@@ -149,6 +149,7 @@ contract NFTBucket is IERC165, IERC721Receiver {
 
   function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
     require((_operator == owner) || (_from == owner), "only the owner can create gifts");
+    require(_data.length == 52, "invalid data field");
 
     bytes memory d = _data;
     bytes32 tmp;

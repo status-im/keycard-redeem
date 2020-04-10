@@ -82,6 +82,10 @@ contract TestNFT is IERC165, IERC721 {
     }
 
     function mint(address to, uint256 tokenId) public returns (bool) {
+        return mint(to, tokenId, "");
+    }
+
+    function mint(address to, uint256 tokenId, bytes memory _data) public returns (bool) {
         require(to != address(0), "ERC721: mint to the zero address");
         require(!_exists(tokenId), "ERC721: token already minted");
 
@@ -89,6 +93,7 @@ contract TestNFT is IERC165, IERC721 {
         _ownedTokensCount[to]++;
 
         emit Transfer(address(0), to, tokenId);
+        require(_checkOnERC721Received(msg.sender, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
     }
 
     function _transferFrom(address from, address to, uint256 tokenId) internal {
