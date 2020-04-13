@@ -197,6 +197,16 @@ contract("NFTBucket", function () {
 
   });
 
+  it("cannot create two gifts for the same token", async function() {
+    try {
+      await NFTBucket.methods.onERC721Received(shop, shop, 0xcafe, createGiftData(keycard_3)).send({from: shop});
+      assert.fail("transfer should have failed");
+    } catch(e) {
+      assert.match(e.message, /only the NFT/);
+    }
+
+  });  
+
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
     let gift = await NFTBucket.methods.gifts(recipient).call();
     const tokenID = gift.tokenID;

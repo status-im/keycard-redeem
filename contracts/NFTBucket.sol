@@ -148,6 +148,7 @@ contract NFTBucket is IERC165, IERC721Receiver {
   }
 
   function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
+    require(msg.sender == address(tokenContract), "only the NFT contract can call this");
     require((_operator == owner) || (_from == owner), "only the owner can create gifts");
     require(_data.length == 52, "invalid data field");
 
