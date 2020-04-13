@@ -32,8 +32,6 @@ contract NFTBucket is IERC165, IERC721Receiver {
     bytes32 code;
   }
 
-  uint256 public redeemableSupply;
-
   bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
