@@ -32,7 +32,7 @@ contract NFTBucket is IERC165, IERC721Receiver {
     bytes32 code;
   }
 
-  bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
+  bytes4 private constant _ERC721_RECEIVED = 0x150b7a02; //bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
 
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
   bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(uint256 blockNumber,bytes32 blockHash,address receiver,bytes32 code)");
@@ -169,6 +169,6 @@ contract NFTBucket is IERC165, IERC721Receiver {
     gift.tokenID = _tokenID;
     gift.code = code;
 
-    return 0x150b7a02; //bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
+    return _ERC721_RECEIVED;
   }
 }
