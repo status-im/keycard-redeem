@@ -4,15 +4,19 @@ import Web3 from 'web3';
 import parseArgs from 'minimist';
 import fs from 'fs';
 
-const argv = parseArgs(process.argv.slice(2), {boolean: ["deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "validity-days": 365}});
+const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "validity-days": 365}});
 
 const web3 = new Web3(argv["endpoint"]);
 
-const GiftBucketConfig = loadEmbarkArtifact('./embarkArtifacts/contracts/GiftBucket.js');
-const GiftBucketFactoryConfig = loadEmbarkArtifact('./embarkArtifacts/contracts/GiftBucketFactory.js');
+const classPrefix = argv["nft"] ? "NFT" : "Gift";
 
-const GiftBucketFactory = new web3.eth.Contract(GiftBucketFactoryConfig["abiDefinition"]);
-const GiftBucket = new web3.eth.Contract(GiftBucketConfig["abiDefinition"]);
+const BucketConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}Bucket.js`);
+const BucketFactoryConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}BucketFactory.js`);
+const IERC721 = loadEmbarkArtifact(`./embarkArtifacts/contracts/IERC721.js`);
+
+const BucketFactory = new web3.eth.Contract(BucketFactoryConfig["abiDefinition"]);
+const Bucket = new web3.eth.Contract(BucketConfig["abiDefinition"]);
+const ERC721 = new web3.eth.Contract(IERC721["abiDefinition"]);
 
 function loadEmbarkArtifact(path) {
     let file = fs.readFileSync(path, "utf-8");
@@ -49,8 +53,8 @@ async function sendMethod(methodCall, sender, to) {
 }
 
 async function deployFactory(sender) {
-    let code = "0x" + GiftBucketFactoryConfig["code"];
-    let methodCall = GiftBucketFactory.deploy({data: code});
+    let code = "0x" + BucketFactoryConfig["code"];
+    let methodCall = BucketFactory.deploy({data: code});
     let receipt = await sendMethod(methodCall, sender, null);
     return receipt.contractAddress;
 }
@@ -59,11 +63,11 @@ async function deployBucket(sender, factory, token, validityInDays) {
     let now = Math.round(new Date().getTime() / 1000);
     let expirationDate = now + (60 * 60 * 24 * validityInDays); 
 
-    GiftBucketFactory.options.address = factory;
-    let methodCall = GiftBucketFactory.methods.create(token.toLowerCase(), expirationDate);
+    BucketFactory.options.address = factory;
+    let methodCall = BucketFactory.methods.create(token.toLowerCase(), expirationDate);
 
     try {
-        let receipt = await sendMethod(methodCall, sender, GiftBucketFactory.options.address);
+        let receipt = await sendMethod(methodCall, sender, BucketFactory.options.address);
         return receipt.events.BucketCreated.returnValues.bucket;
     } catch(err) {
         console.error(err);
@@ -72,11 +76,38 @@ async function deployBucket(sender, factory, token, validityInDays) {
 }
 
 async function createGift(sender, bucket, keycard) {
-    GiftBucket.options.address = bucket;
-    let methodCall = GiftBucket.methods.createGift(keycard.keycard, keycard.amount, keycard.code);
+    Bucket.options.address = bucket;
+    let methodCall = Bucket.methods.createGift(keycard.keycard, keycard.amount, keycard.code);
 
     try {
-        let receipt = await sendMethod(methodCall, sender, GiftBucket.options.address);
+        let receipt = await sendMethod(methodCall, sender, Bucket.options.address);
+        return receipt;
+    } catch(err) {
+        console.error(err);
+        return null;
+    }
+}
+
+function createNFTData(keycard, code) {
+    return keycard.toLowerCase() + code.replace("0x", "");
+}
+
+function senderAddress(sender) {
+    if (typeof(sender) == "string") {
+        return sender;
+    } else {
+        return sender.address;
+    }  
+}
+
+async function transferNFT(sender, token, bucket, keycard) {
+    Bucket.options.address = bucket;
+    ERC721.options.address = token ? token : await Bucket.methods.tokenContract().call();
+
+    let methodCall = ERC721.methods.safeTransferFrom(senderAddress(sender), bucket, keycard.amount, createNFTData(keycard.keycard, keycard.code));
+
+    try {
+        let receipt = await sendMethod(methodCall, sender, ERC721.options.address);
         return receipt;
     } catch(err) {
         console.error(err);
@@ -90,8 +121,9 @@ function processLine(line) {
 }
 
 async function run() {
-    GiftBucketFactory.transactionConfirmationBlocks = 3;
-    GiftBucket.transactionConfirmationBlocks = 3;
+    BucketFactory.transactionConfirmationBlocks = 3;
+    Bucket.transactionConfirmationBlocks = 3;
+    ERC721.transactionConfirmationBlocks = 3;
 
     let sender;
     let hasDoneSomething = false;
@@ -152,7 +184,7 @@ async function run() {
         let file = fs.readFileSync(argv["file"], 'utf8');
         keycards = file.split("\n").map(processLine);
         for (let keycard of keycards) {
-            await createGift(sender, bucket, keycard)
+            await argv["nft"] ? createGift(sender, bucket, keycard) : transferNFT(sender, argv["token"], bucket, keycard);
         }
     } else if (!hasDoneSomething) {
         console.error("the --file option must be specified");
