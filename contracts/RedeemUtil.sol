@@ -33,8 +33,8 @@ library RedeemUtil {
     require(_redeem.blockNumber >= (block.number - _maxTxDelayInBlocks), "transaction too old");
     require(_redeem.blockHash == blockhash(_redeem.blockNumber), "invalid block hash");
 
-    require(block.timestamp < _expirationTime, "expired gift");     
-    require(block.timestamp > _startTime, "reedeming not yet started");     
+    require(block.timestamp < _expirationTime, "expired gift");
+    require(block.timestamp > _startTime, "reedeming not yet started");
   }
 
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {

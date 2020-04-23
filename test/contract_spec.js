@@ -361,7 +361,7 @@ contract("GiftBucket", function () {
     } catch (e) {
       assert.match(e.message, /invalid block hash/);
     }
-  });  
+  });
 
   it("can redeem before expiration date", async function() {
     const block = await web3.eth.getBlock("latest");
@@ -398,5 +398,6 @@ contract("GiftBucket", function () {
   it("shop can kill contract after expirationTime", async function() {
     await mineAt(EXPIRATION_TIME);
     await testKill();
+    await mineAt(NOW);
   });
 });
