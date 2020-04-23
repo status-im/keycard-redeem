@@ -99,7 +99,10 @@ contract GiftBucket {
     uint256 amount = gift.amount;
     require(redeemableSupply >= amount, "not enough redeemable supply");
 
+    gift.recipient = address(0);
     gift.amount = 0;
+    gift.code = 0;
+
     redeemableSupply -= amount;
 
     tokenContract.transfer(_redeem.receiver, amount);

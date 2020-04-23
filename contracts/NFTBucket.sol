@@ -69,7 +69,12 @@ contract NFTBucket is IERC165, IERC721Receiver {
 
     RedeemUtil.validateCode(_redeem, gift.code);
 
-    tokenContract.safeTransferFrom(address(this), _redeem.receiver, gift.tokenID);
+    uint256 tokenID = gift.tokenID;
+    gift.recipient = address(0);
+    gift.tokenID = 0;
+    gift.code = 0;
+
+    tokenContract.safeTransferFrom(address(this), _redeem.receiver, tokenID);
   }
 
   function kill() external onlyOwner {
