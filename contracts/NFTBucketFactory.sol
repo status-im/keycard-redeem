@@ -9,11 +9,11 @@ contract NFTBucketFactory {
   event BucketCreated(address indexed gifter, address indexed bucket);
 
   constructor() public {
-    NFTBucketImplementation = new NFTBucket(address(0), block.timestamp + 1);
+    NFTBucketImplementation = new NFTBucket(address(0), 0, block.timestamp + 1);
   }
 
-  function create(address _tokenAddress, uint256 _expirationTime) public returns (address) {
-    address p = address(new Proxy(abi.encodeWithSelector(0xc350a1b5, _tokenAddress, _expirationTime, msg.sender), address(NFTBucketImplementation)));
+  function create(address _tokenAddress, uint256 _startTime, uint256 _expirationTime) public returns (address) {
+    address p = address(new Proxy(abi.encodeWithSelector(0x9e3d87cd, _tokenAddress, _startTime, _expirationTime, msg.sender), address(NFTBucketImplementation)));
     emit BucketCreated(msg.sender, p);
     return p;
   }

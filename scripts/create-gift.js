@@ -4,7 +4,7 @@ import Web3 from 'web3';
 import parseArgs from 'minimist';
 import fs from 'fs';
 
-const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "validity-days": 365}});
+const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365}});
 
 const web3 = new Web3(argv["endpoint"]);
 
@@ -47,8 +47,8 @@ async function sendMethod(methodCall, sender, to) {
         let data = methodCall.encodeABI();
         let signedTx = await sender.signTransaction({to: to, data: data, gas: gasAmount});
         receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    }   
-    
+    }
+
     return receipt;
 }
 
@@ -59,12 +59,13 @@ async function deployFactory(sender) {
     return receipt.contractAddress;
 }
 
-async function deployBucket(sender, factory, token, validityInDays) {
+async function deployBucket(sender, factory, token, startInDays, validityInDays) {
     let now = Math.round(new Date().getTime() / 1000);
-    let expirationDate = now + (60 * 60 * 24 * validityInDays); 
+    let startDate = now + (60 * 60 * 24 * startInDays);
+    let expirationDate = now + (60 * 60 * 24 * validityInDays);
 
     BucketFactory.options.address = factory;
-    let methodCall = BucketFactory.methods.create(token.toLowerCase(), expirationDate);
+    let methodCall = BucketFactory.methods.create(token.toLowerCase(), startDate, expirationDate);
 
     try {
         let receipt = await sendMethod(methodCall, sender, BucketFactory.options.address);
@@ -97,7 +98,7 @@ function senderAddress(sender) {
         return sender;
     } else {
         return sender.address;
-    }  
+    }
 }
 
 async function transferNFT(sender, token, bucket, keycard) {
@@ -144,7 +145,7 @@ async function run() {
     }
 
     let factory;
-    
+
     if (argv["deploy-factory"]) {
         factory = await deployFactory(sender);
         hasDoneSomething = true;
@@ -154,7 +155,7 @@ async function run() {
     }
 
     let bucket;
-    
+
     if (argv["deploy-bucket"]) {
         if (!factory) {
             console.error("the --factory or --deploy-factory option must be specified");
@@ -171,13 +172,13 @@ async function run() {
             process.exit(1);
         }
 
-        bucket = await deployBucket(sender, factory, argv["token"], argv["validity-days"]);
+        bucket = await deployBucket(sender, factory, argv["token"], argv["start-in-days"], argv["validity-days"]);
         hasDoneSomething = true;
         console.log("Bucket deployed at: " + bucket);
     } else {
         bucket = argv["bucket"];
     }
-    
+
     let keycards;
 
     if (argv["file"]) {

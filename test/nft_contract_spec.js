@@ -7,8 +7,8 @@ const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
 const REDEEM_CODE = web3.utils.sha3("hello world");
 const NOW = Math.round(new Date().getTime() / 1000);
+const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
-const NEW_EXPIRATION_TIME = EXPIRATION_TIME + 60;
 
 let shop,
     user,
@@ -23,7 +23,7 @@ config({
         args: [],
       },
       "NFTBucket": {
-        args: ["$TestNFT", EXPIRATION_TIME],
+        args: ["$TestNFT", START_TIME, EXPIRATION_TIME],
       },
       "NFTBucketFactory": {
         args: [],
@@ -134,7 +134,7 @@ contract("NFTBucket", function () {
   it("deploy bucket", async () => {
     // only to test gas
     const deploy = _NFTBucket.deploy({
-      arguments: [TestNFT._address, EXPIRATION_TIME]
+      arguments: [TestNFT._address, START_TIME, EXPIRATION_TIME]
     });
 
     const gas = await deploy.estimateGas();
@@ -142,7 +142,7 @@ contract("NFTBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = NFTBucketFactory.methods.create(TestNFT._address, EXPIRATION_TIME);
+    const create = NFTBucketFactory.methods.create(TestNFT._address, START_TIME, EXPIRATION_TIME);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
@@ -229,6 +229,18 @@ contract("NFTBucket", function () {
     let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
     assert.equal(tokenOwner, receiver, `Token owner is ${tokenOwner} instead of the expected ${receiver}`);
   }
+
+  it("cannot redeem before the start date", async function() {
+    const block = await web3.eth.getBlock("latest");
+    await mineAt(START_TIME);
+
+    try {
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, block.hash);
+      assert.fail("redeem should have failed");
+    } catch(e) {
+      assert.match(e.message, /not yet started/);
+    }
+  });
 
   it("cannot redeem after expiration date", async function() {
     const block = await web3.eth.getBlock("latest");

@@ -7,8 +7,8 @@ const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
 const REDEEM_CODE = web3.utils.sha3("hello world");
 const NOW = Math.round(new Date().getTime() / 1000);
+const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
-const NEW_EXPIRATION_TIME = EXPIRATION_TIME + 60;
 
 let shop,
     user,
@@ -23,7 +23,7 @@ config({
         args: ["TEST", 18],
       },
       "GiftBucket": {
-        args: ["$TestToken", EXPIRATION_TIME],
+        args: ["$TestToken", START_TIME, EXPIRATION_TIME],
       },
       "GiftBucketFactory": {
         args: [],
@@ -133,7 +133,7 @@ contract("GiftBucket", function () {
   it("deploy bucket", async () => {
     // only to test gas
     const deploy = _GiftBucket.deploy({
-      arguments: [TestToken._address, EXPIRATION_TIME]
+      arguments: [TestToken._address, START_TIME, EXPIRATION_TIME]
     });
 
     const gas = await deploy.estimateGas();
@@ -141,7 +141,7 @@ contract("GiftBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = GiftBucketFactory.methods.create(TestToken._address, EXPIRATION_TIME);
+    const create = GiftBucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
@@ -295,6 +295,18 @@ contract("GiftBucket", function () {
     assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
 
   }
+
+  it("cannot redeem before start date", async function() {
+    const block = await web3.eth.getBlock("latest");
+    await mineAt(START_TIME);
+
+    try {
+      await testRedeem(user, keycard_1, keycard_1, relayer, REDEEM_CODE, block.number, block.hash);
+      assert.fail("redeem should have failed");
+    } catch(e) {
+      assert.match(e.message, /not yet started/);
+    }
+  });
 
   it("cannot redeem after expiration date", async function() {
     const block = await web3.eth.getBlock("latest");

@@ -13,6 +13,7 @@ contract GiftBucket {
   IERC20 public tokenContract;
 
   uint256 public expirationTime;
+  uint256 public startTime;
 
   uint256 constant maxTxDelayInBlocks = 10;
 
@@ -34,16 +35,17 @@ contract GiftBucket {
     _;
   }
 
-  constructor(address _tokenAddress, uint256 _expirationTime) public {
-    initialize(_tokenAddress, _expirationTime, msg.sender);
+  constructor(address _tokenAddress, uint256 _startTime, uint256 _expirationTime) public {
+    initialize(_tokenAddress, _startTime, _expirationTime, msg.sender);
   }
 
-  function initialize(address _tokenAddress, uint256 _expirationTime, address _owner) public {
+  function initialize(address _tokenAddress, uint256 _startTime, uint256 _expirationTime, address _owner) public {
     require(initialized == false, "already initialized");
 
     RedeemUtil.validateExpiryDate(_expirationTime);
 
     tokenContract = IERC20(_tokenAddress);
+    startTime = _startTime;
     expirationTime = _expirationTime;
     owner = payable(_owner);
 
@@ -87,7 +89,7 @@ contract GiftBucket {
   }
 
   function redeem(RedeemUtil.Redeem calldata _redeem, bytes calldata _sig) external {
-    RedeemUtil.validateRedeem(_redeem, maxTxDelayInBlocks, expirationTime, 0);
+    RedeemUtil.validateRedeem(_redeem, maxTxDelayInBlocks, expirationTime, startTime);
 
     address recipient = RedeemUtil.recoverSigner(DOMAIN_SEPARATOR, _redeem, _sig);
 
