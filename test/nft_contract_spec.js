@@ -205,7 +205,7 @@ contract("NFTBucket", function () {
       assert.match(e.message, /only the NFT/);
     }
 
-  });  
+  });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
     let gift = await NFTBucket.methods.gifts(recipient).call();
@@ -295,7 +295,7 @@ contract("NFTBucket", function () {
     } catch (e) {
       assert.match(e.message, /invalid block hash/);
     }
-  });  
+  });
 
   it("can redeem before expiration date", async function() {
     const block = await web3.eth.getBlock("latest");
@@ -322,5 +322,6 @@ contract("NFTBucket", function () {
   it("shop can kill contract after expirationTime", async function() {
     await mineAt(EXPIRATION_TIME);
     await testKill();
+    await mineAt(NOW);
   });
 });
