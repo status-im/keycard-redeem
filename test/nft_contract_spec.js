@@ -165,7 +165,7 @@ contract("NFTBucket", function () {
   async function checkGift(recipient, tokenID) {
     let gift = await NFTBucket.methods.gifts(recipient).call();
     assert.equal(gift.recipient, recipient, "gift not found");
-    assert.equal(parseInt(gift.tokenID), tokenID, "token ID does not match");
+    assert.equal(parseInt(gift.data), tokenID, "token ID does not match");
     let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
     assert.equal(tokenOwner, NFTBucket._address, "token owner is wrong");
   }
@@ -209,7 +209,7 @@ contract("NFTBucket", function () {
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
     let gift = await NFTBucket.methods.gifts(recipient).call();
-    const tokenID = gift.tokenID;
+    const tokenID = gift.data;
 
     const message = {
       blockNumber: blockNumber,

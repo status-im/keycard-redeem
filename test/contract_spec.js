@@ -156,6 +156,22 @@ contract("GiftBucket", function () {
     });
   });
 
+  it("deploy bucket via factory", async () => {
+    const create = GiftBucketFactory.methods.create(TestToken._address, EXPIRATION_TIME);
+    const gas = await create.estimateGas();
+    const receipt = await create.send({
+      from: shop,
+      gas: gas,
+    });
+
+    const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
+    const jsonInterface = _GiftBucket.options.jsonInterface;
+    GiftBucket = new EmbarkJS.Blockchain.Contract({
+      abi: jsonInterface,
+      address: bucketAddress,
+    });
+  });
+
   it("shop buys 100 tokens", async function () {
     let supply = await TestToken.methods.totalSupply().call();
     assert.equal(parseInt(supply), 0);
@@ -264,7 +280,7 @@ contract("GiftBucket", function () {
     let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
 
     let gift = await GiftBucket.methods.gifts(recipient).call();
-    const amount = parseInt(gift.amount);
+    const amount = parseInt(gift.data);
 
     const message = {
       blockNumber: blockNumber,
@@ -293,7 +309,6 @@ contract("GiftBucket", function () {
     let expectedRedeemableSupply = initialRedeemableSupply - amount;
     let redeemableSupply = await GiftBucket.methods.redeemableSupply().call();
     assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
-
   }
 
   it("cannot redeem before start date", async function() {
