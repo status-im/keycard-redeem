@@ -81,14 +81,11 @@ abstract contract Bucket {
     transferRedeemable(data, _redeem);
   }
 
-
   function kill() external onlyOwner {
     validateExpired(expirationTime);
     transferRedeemablesToOwner();
     selfdestruct(owner);
   }
-
-  // UTILS
 
   function getChainID() internal pure returns (uint256) {
     uint256 id;
