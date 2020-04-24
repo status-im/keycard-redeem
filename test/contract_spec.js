@@ -156,22 +156,6 @@ contract("GiftBucket", function () {
     });
   });
 
-  it("deploy bucket via factory", async () => {
-    const create = GiftBucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
-    const gas = await create.estimateGas();
-    const receipt = await create.send({
-      from: shop,
-      gas: gas,
-    });
-
-    const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
-    const jsonInterface = _GiftBucket.options.jsonInterface;
-    GiftBucket = new EmbarkJS.Blockchain.Contract({
-      abi: jsonInterface,
-      address: bucketAddress,
-    });
-  });
-
   it("shop buys 100 tokens", async function () {
     let supply = await TestToken.methods.totalSupply().call();
     assert.equal(parseInt(supply), 0);
