@@ -157,7 +157,7 @@ contract("GiftBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = GiftBucketFactory.methods.create(TestToken._address, EXPIRATION_TIME);
+    const create = GiftBucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
