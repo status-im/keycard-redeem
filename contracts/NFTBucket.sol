@@ -1,91 +1,26 @@
 pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
+import "./Bucket.sol";
 import "./erc721/IERC721.sol";
 import "./erc721/IERC721Receiver.sol";
 import "./erc721/IERC165.sol";
-import "./RedeemUtil.sol";
 
-contract NFTBucket is IERC165, IERC721Receiver {
-  bool initialized;
-
-  address payable public owner;
-
-  IERC721 public tokenContract;
-
-  uint256 public expirationTime;
-  uint256 public startTime;
-
-  uint256 constant maxTxDelayInBlocks = 10;
-
-  struct Gift {
-    address recipient;
-    uint256 tokenID;
-    bytes32 code;
-  }
-
-  mapping(address => Gift) public gifts;
-
+contract NFTBucket is Bucket, IERC165, IERC721Receiver {
   bytes4 private constant _ERC721_RECEIVED = 0x150b7a02; //bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
 
-  bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-  bytes32 DOMAIN_SEPARATOR;
+  constructor(
+    address _tokenAddress,
+    uint256 _startTime,
+    uint256 _expirationTime) Bucket("KeycardNFTGift", _tokenAddress, _startTime, _expirationTime) public {}
 
-  modifier onlyOwner() {
-    require(msg.sender == owner, "owner required");
-    _;
+  function transferRedeemable(uint256 data, Redeem memory redeem) override internal {
+    IERC721(tokenAddress).safeTransferFrom(address(this), redeem.receiver, data);
   }
 
-  constructor(address _tokenAddress, uint256 _startTime, uint256 _expirationTime) public {
-    initialize(_tokenAddress, _startTime, _expirationTime, msg.sender);
-  }
-
-  function initialize(address _tokenAddress, uint256 _startTime, uint256 _expirationTime, address _owner) public {
-    require(initialized == false, "already initialized");
-
-    RedeemUtil.validateExpiryDate(_expirationTime);
-
-    tokenContract = IERC721(_tokenAddress);
-    startTime = _startTime;
-    expirationTime = _expirationTime;
-    owner = payable(_owner);
-
-    DOMAIN_SEPARATOR = keccak256(abi.encode(
-      EIP712DOMAIN_TYPEHASH,
-      keccak256("KeycardNFTGift"),
-      keccak256("1"),
-      RedeemUtil.getChainID(),
-      address(this)
-    ));
-
-    initialized = true;
-  }
-
-  function redeem(RedeemUtil.Redeem calldata _redeem, bytes calldata _sig) external {
-    RedeemUtil.validateRedeem(_redeem, maxTxDelayInBlocks, expirationTime, startTime);
-
-    address recipient = RedeemUtil.recoverSigner(DOMAIN_SEPARATOR, _redeem, _sig);
-
-    Gift storage gift = gifts[recipient];
-    require(gift.recipient == recipient, "not found");
-
-    RedeemUtil.validateCode(_redeem, gift.code);
-
-    uint256 tokenID = gift.tokenID;
-    gift.recipient = address(0);
-    gift.tokenID = 0;
-    gift.code = 0;
-
-    tokenContract.safeTransferFrom(address(this), _redeem.receiver, tokenID);
-  }
-
-  function kill() external onlyOwner {
-    RedeemUtil.validateExpired(expirationTime);
-
-    tokenContract.setApprovalForAll(owner, true);
-    assert(tokenContract.isApprovedForAll(address(this), owner));
-
-    selfdestruct(owner);
+  function transferRedeemablesToOwner() override internal {
+    IERC721(tokenAddress).setApprovalForAll(owner, true);
+    assert(IERC721(tokenAddress).isApprovedForAll(address(this), owner));
   }
 
   function supportsInterface(bytes4 interfaceID) external override(IERC165) view returns (bool) {
@@ -93,7 +28,7 @@ contract NFTBucket is IERC165, IERC721Receiver {
   }
 
   function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
-    require(msg.sender == address(tokenContract), "only the NFT contract can call this");
+    require(msg.sender == tokenAddress, "only the NFT contract can call this");
     require((_operator == owner) || (_from == owner), "only the owner can create gifts");
     require(_data.length == 52, "invalid data field");
 
@@ -113,8 +48,8 @@ contract NFTBucket is IERC165, IERC721Receiver {
     require(gift.recipient == address(0), "recipient already used");
 
     gift.recipient = recipient;
-    gift.tokenID = _tokenID;
     gift.code = code;
+    gift.data = _tokenID;
 
     return _ERC721_RECEIVED;
   }

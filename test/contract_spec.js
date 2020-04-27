@@ -264,7 +264,7 @@ contract("GiftBucket", function () {
     let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
 
     let gift = await GiftBucket.methods.gifts(recipient).call();
-    const amount = parseInt(gift.amount);
+    const amount = parseInt(gift.data);
 
     const message = {
       blockNumber: blockNumber,
@@ -293,7 +293,6 @@ contract("GiftBucket", function () {
     let expectedRedeemableSupply = initialRedeemableSupply - amount;
     let redeemableSupply = await GiftBucket.methods.redeemableSupply().call();
     assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
-
   }
 
   it("cannot redeem before start date", async function() {
