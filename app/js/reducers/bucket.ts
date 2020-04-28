@@ -2,6 +2,7 @@ import {
   BucketActions,
   BucketErrors,
   BUCKET_REDEEMABLE_LOADING,
+  BUCKET_REDEEMABLE_LOADING_ERROR,
   BUCKET_REDEEMABLE_NOT_FOUND,
   BUCKET_REDEEMABLE_LOADED,
   BUCKET_TOKEN_LOADING,
@@ -42,6 +43,14 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
         loading: true,
         address: action.address,
         recipient: action.recipient,
+      }
+    }
+
+    case BUCKET_REDEEMABLE_LOADING_ERROR: {
+      return {
+        ...initialState,
+        loading: false,
+        error: action.error,
       }
     }
 

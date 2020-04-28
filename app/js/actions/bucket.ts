@@ -129,20 +129,24 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
   return async (dispatch: Dispatch, getState: () => RootState) => {
     dispatch(loadingRedeemable(bucketAddress, recipientAddress));
     const bucket = newBucketContract(bucketAddress);
-    const expirationTime = await bucket.methods.expirationTime().call();
-    bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
-      const { recipient, amount, code } = result;
-      if (amount === "0") {
-        dispatch(redeemableNotFound())
-        return;
-      }
+    bucket.methods.expirationTime().call().then(expirationTime => {
+      bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
+        const { recipient, amount, code } = result;
+        if (amount === "0") {
+          dispatch(redeemableNotFound())
+          return;
+        }
 
-      dispatch(redeemableLoaded(expirationTime, recipient, amount, code));
-      dispatch<any>(loadToken(bucket))
+        dispatch(redeemableLoaded(expirationTime, recipient, amount, code));
+        dispatch<any>(loadToken(bucket))
+      }).catch(err => {
+        dispatch(errorLoadingRedeemable(err))
+        console.error("err: ", err)
+      })
     }).catch(err => {
-      dispatch(errorLoadingRedeemable(err))
+      dispatch(errorLoadingRedeemable(`error loading expirationTime: ${err}`))
       console.error("err: ", err)
-    })
+    });
   };
 };
 
