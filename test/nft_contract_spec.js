@@ -62,7 +62,7 @@ async function signRedeem(contractAddress, signer, message) {
   ];
 
   const domainData = {
-    name: "KeycardNFTGift",
+    name: "KeycardNFTBucket",
     version: "1",
     chainId: chainId,
     verifyingContract: contractAddress
@@ -157,39 +157,39 @@ contract("NFTBucket", function () {
     });
   });
 
-  function createGiftData(recipient) {
+  function createRedeemableData(recipient) {
       const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
       return recipient + redeemCodeHash.replace("0x", "");
   }
 
-  async function checkGift(recipient, tokenID) {
-    let gift = await NFTBucket.methods.gifts(recipient).call();
-    assert.equal(gift.recipient, recipient, "gift not found");
-    assert.equal(parseInt(gift.data), tokenID, "token ID does not match");
+  async function checkRedeemable(recipient, tokenID) {
+    let redeemable = await NFTBucket.methods.redeemables(recipient).call();
+    assert.equal(redeemable.recipient, recipient, "redeemable not found");
+    assert.equal(parseInt(redeemable.data), tokenID, "token ID does not match");
     let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
     assert.equal(tokenOwner, NFTBucket._address, "token owner is wrong");
   }
 
-  it("mint directly to gift", async function () {
-    await TestNFT.methods.mint(NFTBucket._address, 42, createGiftData(keycard_1)).send({
+  it("mint directly to redeemable", async function () {
+    await TestNFT.methods.mint(NFTBucket._address, 42, createRedeemableData(keycard_1)).send({
       from: shop,
     });
 
-    await checkGift(keycard_1, 42);
+    await checkRedeemable(keycard_1, 42);
   });
 
   it("transfer token from shop", async function() {
     await TestNFT.methods.mint(shop, 0xcafe).send({from: shop,});
-    await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 0xcafe, createGiftData(keycard_2)).send({from: shop});
+    await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 0xcafe, createRedeemableData(keycard_2)).send({from: shop});
 
-    await checkGift(keycard_2, 0xcafe);
+    await checkRedeemable(keycard_2, 0xcafe);
   });
 
-  it("cannot create two gifts for the same recipient", async function() {
+  it("cannot create two redeemables for the same recipient", async function() {
     await TestNFT.methods.mint(shop, 43).send({from: shop});
 
     try {
-      await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 43, createGiftData(keycard_2)).send({from: shop});
+      await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 43, createRedeemableData(keycard_2)).send({from: shop});
       assert.fail("transfer should have failed");
     } catch(e) {
       assert.match(e.message, /already used/);
@@ -197,9 +197,9 @@ contract("NFTBucket", function () {
 
   });
 
-  it("cannot create two gifts for the same token", async function() {
+  it("cannot create two redeemables for the same token", async function() {
     try {
-      await NFTBucket.methods.onERC721Received(shop, shop, 0xcafe, createGiftData(keycard_3)).send({from: shop});
+      await NFTBucket.methods.onERC721Received(shop, shop, 0xcafe, createRedeemableData(keycard_3)).send({from: shop});
       assert.fail("transfer should have failed");
     } catch(e) {
       assert.match(e.message, /only the NFT/);
@@ -208,8 +208,8 @@ contract("NFTBucket", function () {
   });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
-    let gift = await NFTBucket.methods.gifts(recipient).call();
-    const tokenID = gift.data;
+    let redeemable = await NFTBucket.methods.redeemables(recipient).call();
+    const tokenID = redeemable.data;
 
     const message = {
       blockNumber: blockNumber,

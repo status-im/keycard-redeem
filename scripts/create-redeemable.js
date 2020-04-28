@@ -8,7 +8,7 @@ const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory"
 
 const web3 = new Web3(argv["endpoint"]);
 
-const classPrefix = argv["nft"] ? "NFT" : "Gift";
+const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
 const BucketConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}Bucket.js`);
 const BucketFactoryConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}BucketFactory.js`);
@@ -76,9 +76,9 @@ async function deployBucket(sender, factory, token, startInDays, validityInDays)
     }
 }
 
-async function createGift(sender, bucket, keycard) {
+async function createRedeemable(sender, bucket, keycard) {
     Bucket.options.address = bucket;
-    let methodCall = Bucket.methods.createGift(keycard.keycard, keycard.amount, keycard.code);
+    let methodCall = Bucket.methods.createRedeemable(keycard.keycard, keycard.amount, keycard.code);
 
     try {
         let receipt = await sendMethod(methodCall, sender, Bucket.options.address);
@@ -185,7 +185,7 @@ async function run() {
         let file = fs.readFileSync(argv["file"], 'utf8');
         keycards = file.split("\n").map(processLine);
         for (let keycard of keycards) {
-            await argv["nft"] ? createGift(sender, bucket, keycard) : transferNFT(sender, argv["token"], bucket, keycard);
+            await argv["nft"] ? createRedeemable(sender, bucket, keycard) : transferNFT(sender, argv["token"], bucket, keycard);
         }
     } else if (!hasDoneSomething) {
         console.error("the --file option must be specified");

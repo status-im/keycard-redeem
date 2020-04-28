@@ -1,5 +1,5 @@
 import { RootState } from '../reducers';
-import GiftBucket from '../../../embarkArtifacts/contracts/GiftBucket';
+import ERC20Bucket from '../../../embarkArtifacts/contracts/ERC20Bucket';
 import IERC20Detailed from '../../../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
 import { Dispatch } from 'redux';
@@ -154,7 +154,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   ];
 
   const domainData = {
-    name: "KeycardGift",
+    name: "KeycardERC20Bucket",
     version: "1",
     chainId: chainId,
     verifyingContract: contractAddress

@@ -1,5 +1,5 @@
 import React from 'react';
-import GiftBucketFactory from '../../../embarkArtifacts/contracts/GiftBucketFactory';
+import ERC20BucketFactory from '../../../embarkArtifacts/contracts/ERC20BucketFactory';
 import {
   shallowEqual,
   useSelector,
@@ -40,7 +40,7 @@ export default function(ownProps: any) {
 
   return <>
     Network ID: {props.networkID} <br />
-    Factory: {GiftBucketFactory.address} <br />
+    Factory: {ERC20BucketFactory.address} <br />
     Web3 Type: {web3Type(props.type)}
     <hr />
     <div>

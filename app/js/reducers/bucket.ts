@@ -1,9 +1,9 @@
 import {
   BucketActions,
   BucketErrors,
-  BUCKET_GIFT_LOADING,
-  BUCKET_GIFT_NOT_FOUND,
-  BUCKET_GIFT_LOADED,
+  BUCKET_REDEEMABLE_LOADING,
+  BUCKET_REDEEMABLE_NOT_FOUND,
+  BUCKET_REDEEMABLE_LOADED,
   BUCKET_TOKEN_LOADING,
   BUCKET_TOKEN_LOADED,
 } from "../actions/bucket";
@@ -36,7 +36,7 @@ const initialState: BucketState = {
 
 export const bucketReducer = (state: BucketState = initialState, action: BucketActions): BucketState => {
   switch (action.type) {
-    case BUCKET_GIFT_LOADING: {
+    case BUCKET_REDEEMABLE_LOADING: {
       return {
         ...initialState,
         loading: true,
@@ -45,7 +45,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_GIFT_NOT_FOUND: {
+    case BUCKET_REDEEMABLE_NOT_FOUND: {
       return {
         ...state,
         loading: false,
@@ -53,7 +53,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_GIFT_LOADED: {
+    case BUCKET_REDEEMABLE_LOADED: {
       return {
         ...state,
         loading: false,

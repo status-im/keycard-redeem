@@ -1,7 +1,7 @@
 const EmbarkJS = artifacts.require('EmbarkJS');
 const TestToken = artifacts.require('TestToken');
-const _GiftBucket = artifacts.require('GiftBucket');
-const GiftBucketFactory = artifacts.require('GiftBucketFactory');
+const _ERC20Bucket = artifacts.require('ERC20Bucket');
+const ERC20BucketFactory = artifacts.require('ERC20BucketFactory');
 
 const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
@@ -22,10 +22,10 @@ config({
       "TestToken": {
         args: ["TEST", 18],
       },
-      "GiftBucket": {
+      "ERC20Bucket": {
         args: ["$TestToken", START_TIME, EXPIRATION_TIME],
       },
-      "GiftBucketFactory": {
+      "ERC20BucketFactory": {
         args: [],
       },
     }
@@ -61,7 +61,7 @@ async function signRedeem(contractAddress, signer, message) {
   ];
 
   const domainData = {
-    name: "KeycardGift",
+    name: "KeycardERC20Bucket",
     version: "1",
     chainId: chainId,
     verifyingContract: contractAddress
@@ -115,14 +115,14 @@ if (assert.match === undefined) {
   }
 }
 
-contract("GiftBucket", function () {
-  let GiftBucket;
+contract("ERC20Bucket", function () {
+  let ERC20Bucket;
 
   sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
 
   it("deploy factory", async () => {
     // only to test gas
-    const deploy = GiftBucketFactory.deploy({
+    const deploy = ERC20BucketFactory.deploy({
       arguments: []
     });
 
@@ -132,7 +132,7 @@ contract("GiftBucket", function () {
 
   it("deploy bucket", async () => {
     // only to test gas
-    const deploy = _GiftBucket.deploy({
+    const deploy = _ERC20Bucket.deploy({
       arguments: [TestToken._address, START_TIME, EXPIRATION_TIME]
     });
 
@@ -141,7 +141,7 @@ contract("GiftBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = GiftBucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
+    const create = ERC20BucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
@@ -149,8 +149,8 @@ contract("GiftBucket", function () {
     });
 
     const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
-    const jsonInterface = _GiftBucket.options.jsonInterface;
-    GiftBucket = new EmbarkJS.Blockchain.Contract({
+    const jsonInterface = _ERC20Bucket.options.jsonInterface;
+    ERC20Bucket = new EmbarkJS.Blockchain.Contract({
       abi: jsonInterface,
       address: bucketAddress,
     });
@@ -172,99 +172,99 @@ contract("GiftBucket", function () {
   });
 
   it("add supply", async function() {
-    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucket balance before is ${bucketBalance} instead of 0`);
 
     let shopBalance = await TestToken.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY, `shop balance before is ${shopBalance} instead of ${TOTAL_SUPPLY}`);
 
-    const transfer = TestToken.methods.transfer(GiftBucket._address, TOTAL_SUPPLY);
+    const transfer = TestToken.methods.transfer(ERC20Bucket._address, TOTAL_SUPPLY);
     const transferGas = await transfer.estimateGas();
     await transfer.send({
       from: shop,
       gas: transferGas,
     });
 
-    bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
     assert.equal(parseInt(bucketBalance), TOTAL_SUPPLY, `bucket balance after is ${bucketBalance} instead of ${TOTAL_SUPPLY}`);
 
     shopBalance = await TestToken.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), 0, `shop balance after is ${shopBalance} instead of 0`);
 
-    let totalSupply = await GiftBucket.methods.totalSupply().call();
+    let totalSupply = await ERC20Bucket.methods.totalSupply().call();
     assert.equal(parseInt(totalSupply), TOTAL_SUPPLY, `total contract supply is ${totalSupply} instead of ${TOTAL_SUPPLY}`);
 
-    let availableSupply = await GiftBucket.methods.availableSupply().call();
+    let availableSupply = await ERC20Bucket.methods.availableSupply().call();
     assert.equal(parseInt(availableSupply), TOTAL_SUPPLY, `available contract supply is ${availableSupply} instead of ${TOTAL_SUPPLY}`);
   });
 
-  async function testCreateGift(keycard, amount) {
-    let initialSupply = await GiftBucket.methods.totalSupply().call();
-    let initialAvailableSupply = await GiftBucket.methods.availableSupply().call();
+  async function testCreateRedeemable(keycard, amount) {
+    let initialSupply = await ERC20Bucket.methods.totalSupply().call();
+    let initialAvailableSupply = await ERC20Bucket.methods.availableSupply().call();
 
     const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
-    const createGift = GiftBucket.methods.createGift(keycard, amount, redeemCodeHash);
-    const createGiftGas = await createGift.estimateGas();
-    await createGift.send({
+    const createRedeemable = ERC20Bucket.methods.createRedeemable(keycard, amount, redeemCodeHash);
+    const createRedeemableGas = await createRedeemable.estimateGas();
+    await createRedeemable.send({
       from: shop,
-      gas: createGiftGas,
+      gas: createRedeemableGas,
     });
 
-    let totalSupply = await GiftBucket.methods.totalSupply().call();
+    let totalSupply = await ERC20Bucket.methods.totalSupply().call();
     assert.equal(parseInt(totalSupply), parseInt(initialSupply), `totalSupply is ${totalSupply} instead of ${initialSupply}`);
 
-    let availableSupply = await GiftBucket.methods.availableSupply().call();
+    let availableSupply = await ERC20Bucket.methods.availableSupply().call();
     assert.equal(parseInt(availableSupply), parseInt(initialAvailableSupply) - amount);
   }
 
-  it("createGift should fail if amount is zero", async function() {
+  it("createRedeemable should fail if amount is zero", async function() {
     try {
-      await testCreateGift(keycard_1, 0);
-      assert.fail("createGift should have failed");
+      await testCreateRedeemable(keycard_1, 0);
+      assert.fail("createRedeemable should have failed");
     } catch(e) {
       assert.match(e.message, /invalid amount/);
     }
   });
 
 
-  it("createGift fails if amount > totalSupply", async function() {
+  it("createRedeemable fails if amount > totalSupply", async function() {
     try {
-      await testCreateGift(keycard_1, TOTAL_SUPPLY + 1);
-      assert.fail("createGift should have failed");
+      await testCreateRedeemable(keycard_1, TOTAL_SUPPLY + 1);
+      assert.fail("createRedeemable should have failed");
     } catch(e) {
       assert.match(e.message, /low supply/);
     }
   });
 
-  it("createGift", async function() {
-    await testCreateGift(keycard_1, GIFT_AMOUNT);
+  it("createRedeemable", async function() {
+    await testCreateRedeemable(keycard_1, GIFT_AMOUNT);
   });
 
-  it("createGift should fail if keycard has already been used", async function() {
+  it("createRedeemable should fail if keycard has already been used", async function() {
     try {
-      await testCreateGift(keycard_1, 1);
-      assert.fail("createGift should have failed");
+      await testCreateRedeemable(keycard_1, 1);
+      assert.fail("createRedeemable should have failed");
     } catch(e) {
       assert.match(e.message, /recipient already used/);
     }
   });
 
-  it("createGift amount > availableSupply", async function() {
+  it("createRedeemable amount > availableSupply", async function() {
     try {
-      await testCreateGift(keycard_2, TOTAL_SUPPLY - GIFT_AMOUNT + 1);
-      assert.fail("createGift should have failed");
+      await testCreateRedeemable(keycard_2, TOTAL_SUPPLY - GIFT_AMOUNT + 1);
+      assert.fail("createRedeemable should have failed");
     } catch(e) {
       assert.match(e.message, /low supply/);
     }
   });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
-    let initialBucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    let initialBucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
     let initialUserBalance = await TestToken.methods.balanceOf(user).call();
-    let initialRedeemableSupply = await GiftBucket.methods.redeemableSupply().call();
+    let initialRedeemableSupply = await ERC20Bucket.methods.redeemableSupply().call();
 
-    let gift = await GiftBucket.methods.gifts(recipient).call();
-    const amount = parseInt(gift.data);
+    let redeemable = await ERC20Bucket.methods.redeemables(recipient).call();
+    const amount = parseInt(redeemable.data);
 
     const message = {
       blockNumber: blockNumber,
@@ -273,8 +273,8 @@ contract("GiftBucket", function () {
       code: redeemCode,
     };
 
-    const sig = await signRedeem(GiftBucket._address, signer, message);
-    const redeem = GiftBucket.methods.redeem(message, sig);
+    const sig = await signRedeem(ERC20Bucket._address, signer, message);
+    const redeem = ERC20Bucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     await redeem.send({
       from: relayer,
@@ -283,7 +283,7 @@ contract("GiftBucket", function () {
 
 
     let expectedBucketBalance = parseInt(initialBucketBalance) - amount;
-    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
     assert.equal(parseInt(bucketBalance), expectedBucketBalance, `bucketBalance after redeem should be ${expectedBucketBalance} instead of ${bucketBalance}`);
 
     let expectedUserBalance = parseInt(initialUserBalance + amount);
@@ -291,7 +291,7 @@ contract("GiftBucket", function () {
     assert.equal(parseInt(userBalance), expectedUserBalance, `user`, `userBalance after redeem should be ${expectedUserBalance} instead of ${userBalance}`);
 
     let expectedRedeemableSupply = initialRedeemableSupply - amount;
-    let redeemableSupply = await GiftBucket.methods.redeemableSupply().call();
+    let redeemableSupply = await ERC20Bucket.methods.redeemableSupply().call();
     assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
   }
 
@@ -382,9 +382,9 @@ contract("GiftBucket", function () {
 
   async function testKill() {
     let initialShopBalance = parseInt(await TestToken.methods.balanceOf(shop).call());
-    let initialBucketBalance = parseInt(await TestToken.methods.balanceOf(GiftBucket._address).call());
+    let initialBucketBalance = parseInt(await TestToken.methods.balanceOf(ERC20Bucket._address).call());
 
-    await GiftBucket.methods.kill().send({
+    await ERC20Bucket.methods.kill().send({
       from: shop,
     });
 
@@ -392,7 +392,7 @@ contract("GiftBucket", function () {
     let shopBalance = await TestToken.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), expectedShopBalance, `shop balance after kill is ${shopBalance} instead of ${expectedShopBalance}`);
 
-    let bucketBalance = await TestToken.methods.balanceOf(GiftBucket._address).call();
+    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucketBalance after kill is ${bucketBalance} instead of 0`);
   }
 

@@ -1,60 +1,60 @@
 import { RootState } from '../reducers';
-import GiftBucket from '../../../embarkArtifacts/contracts/GiftBucket';
+import ERC20Bucket from '../../../embarkArtifacts/contracts/ERC20Bucket';
 import IERC20Detailed from '../../../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
 import { Contract } from 'web3-eth-contract';
 import { Dispatch } from 'redux';
 
-export const ERROR_GIFT_NOT_FOUND = "ERROR_GIFT_NOT_FOUND";
-export interface ErrGiftNotFound {
-  type: typeof ERROR_GIFT_NOT_FOUND
+export const ERROR_REDEEMABLE_NOT_FOUND = "ERROR_REDEEMABLE_NOT_FOUND";
+export interface ErrRedeemableNotFound {
+  type: typeof ERROR_REDEEMABLE_NOT_FOUND
 }
 
-export const ERROR_LOADING_GIFT = "ERROR_LOADING_GIFT";
-export interface ErrLoadingGift {
-  type: typeof ERROR_LOADING_GIFT
+export const ERROR_LOADING_REDEEMABLE = "ERROR_LOADING_REDEEMABLE";
+export interface ErrLoadingRedeemable {
+  type: typeof ERROR_LOADING_REDEEMABLE
   message: string
 }
 
 export type BucketErrors =
-  ErrGiftNotFound |
-  ErrLoadingGift;
+  ErrRedeemableNotFound |
+  ErrLoadingRedeemable;
 
-const errGiftNotFound = (): ErrGiftNotFound => ({
-  type: ERROR_GIFT_NOT_FOUND,
+const errRedeemableNotFound = (): ErrRedeemableNotFound => ({
+  type: ERROR_REDEEMABLE_NOT_FOUND,
 });
 
-const errLoadingGift = (message: string): ErrLoadingGift => ({
-  type: ERROR_LOADING_GIFT,
+const errLoadingRedeemable = (message: string): ErrLoadingRedeemable => ({
+  type: ERROR_LOADING_REDEEMABLE,
   message,
 });
 
-export const BUCKET_GIFT_LOADING = "BUCKET_GIFT_LOADING";
-export interface BucketGiftLoadingAction {
-  type: typeof BUCKET_GIFT_LOADING
+export const BUCKET_REDEEMABLE_LOADING = "BUCKET_REDEEMABLE_LOADING";
+export interface BucketRedeemableLoadingAction {
+  type: typeof BUCKET_REDEEMABLE_LOADING
   address: string
   recipient: string
 }
 
-export const BUCKET_GIFT_LOADING_ERROR = "BUCKET_GIFT_LOADING_ERROR";
-export interface BucketGiftLoadingErrorAction {
-  type: typeof BUCKET_GIFT_LOADING_ERROR
-  error: ErrLoadingGift
+export const BUCKET_REDEEMABLE_LOADING_ERROR = "BUCKET_REDEEMABLE_LOADING_ERROR";
+export interface BucketRedeemableLoadingErrorAction {
+  type: typeof BUCKET_REDEEMABLE_LOADING_ERROR
+  error: ErrLoadingRedeemable
 }
 
-export const BUCKET_GIFT_LOADED = "BUCKET_GIFT_LOADED";
-export interface BucketGiftLoadedAction {
-  type: typeof BUCKET_GIFT_LOADED
+export const BUCKET_REDEEMABLE_LOADED = "BUCKET_REDEEMABLE_LOADED";
+export interface BucketRedeemableLoadedAction {
+  type: typeof BUCKET_REDEEMABLE_LOADED
   expirationTime: number
   recipient: string
   amount: string
   codeHash: string
 }
 
-export const BUCKET_GIFT_NOT_FOUND = "BUCKET_GIFT_NOT_FOUND";
-export interface BucketGiftNotFoundAction {
-  type: typeof BUCKET_GIFT_NOT_FOUND
-  error: ErrGiftNotFound
+export const BUCKET_REDEEMABLE_NOT_FOUND = "BUCKET_REDEEMABLE_NOT_FOUND";
+export interface BucketRedeemableNotFoundAction {
+  type: typeof BUCKET_REDEEMABLE_NOT_FOUND
+  error: ErrRedeemableNotFound
 }
 
 export const BUCKET_TOKEN_LOADING = "BUCKET_TOKEN_LOADING";
@@ -71,35 +71,35 @@ export interface BucketTokenLoadedAction {
 }
 
 export type BucketActions =
-  BucketGiftLoadingAction |
-  BucketGiftLoadingErrorAction |
-  BucketGiftLoadedAction |
-  BucketGiftNotFoundAction |
+  BucketRedeemableLoadingAction |
+  BucketRedeemableLoadingErrorAction |
+  BucketRedeemableLoadedAction |
+  BucketRedeemableNotFoundAction |
   BucketTokenLoadingAction |
   BucketTokenLoadedAction;
 
-export const loadingGift = (address: string, recipient: string): BucketGiftLoadingAction => ({
-  type: BUCKET_GIFT_LOADING,
+export const loadingRedeemable = (address: string, recipient: string): BucketRedeemableLoadingAction => ({
+  type: BUCKET_REDEEMABLE_LOADING,
   address,
   recipient,
 });
 
-export const giftLoaded = (expirationTime: number, recipient: string, amount: string, codeHash: string): BucketGiftLoadedAction => ({
-  type: BUCKET_GIFT_LOADED,
+export const redeemableLoaded = (expirationTime: number, recipient: string, amount: string, codeHash: string): BucketRedeemableLoadedAction => ({
+  type: BUCKET_REDEEMABLE_LOADED,
   expirationTime,
   recipient,
   amount,
   codeHash,
 });
 
-export const giftNotFound = (): BucketGiftNotFoundAction => ({
-  type: BUCKET_GIFT_NOT_FOUND,
-  error: errGiftNotFound(),
+export const redeemableNotFound = (): BucketRedeemableNotFoundAction => ({
+  type: BUCKET_REDEEMABLE_NOT_FOUND,
+  error: errRedeemableNotFound(),
 });
 
-export const errorLoadingGift = (errorMessage: string): BucketGiftLoadingErrorAction => ({
-  type: BUCKET_GIFT_LOADING_ERROR,
-  error: errLoadingGift(errorMessage),
+export const errorLoadingRedeemable = (errorMessage: string): BucketRedeemableLoadingErrorAction => ({
+  type: BUCKET_REDEEMABLE_LOADING_ERROR,
+  error: errLoadingRedeemable(errorMessage),
 });
 
 export const loadingToken = (address: string): BucketTokenLoadingAction => ({
@@ -114,7 +114,7 @@ export const tokenLoaded = (symbol: string, decimals: number): BucketTokenLoaded
 });
 
 export const newBucketContract = (address: string) => {
-  const bucketAbi = GiftBucket.options.jsonInterface;
+  const bucketAbi = ERC20Bucket.options.jsonInterface;
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
 }
@@ -125,22 +125,22 @@ const newERC20Contract = (address: string) => {
   return erc20;
 }
 
-export const loadGift = (bucketAddress: string, recipientAddress: string) => {
+export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
-    dispatch(loadingGift(bucketAddress, recipientAddress));
+    dispatch(loadingRedeemable(bucketAddress, recipientAddress));
     const bucket = newBucketContract(bucketAddress);
     const expirationTime = await bucket.methods.expirationTime().call();
-    bucket.methods.gifts(recipientAddress).call().then((result: any) => {
+    bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
       const { recipient, amount, code } = result;
       if (amount === "0") {
-        dispatch(giftNotFound())
+        dispatch(redeemableNotFound())
         return;
       }
 
-      dispatch(giftLoaded(expirationTime, recipient, amount, code));
+      dispatch(redeemableLoaded(expirationTime, recipient, amount, code));
       dispatch<any>(loadToken(bucket))
     }).catch(err => {
-      dispatch(errorLoadingGift(err))
+      dispatch(errorLoadingRedeemable(err))
       console.error("err: ", err)
     })
   };

@@ -8,10 +8,10 @@ import {
 } from 'react-redux';
 import { redeemPath } from '../config';
 import {
-  loadGift,
+  loadRedeemable,
   BucketErrors,
-  ERROR_LOADING_GIFT,
-  ERROR_GIFT_NOT_FOUND,
+  ERROR_LOADING_REDEEMABLE,
+  ERROR_REDEEMABLE_NOT_FOUND,
 } from '../actions/bucket';
 import { toBaseUnit } from "../utils";
 import {
@@ -25,11 +25,11 @@ const REDEEM_CODE = "hello world";
 
 const buckerErrorMessage = (error: BucketErrors): string => {
   switch (error.type) {
-    case ERROR_LOADING_GIFT:
-      return "couldn't load gift";
+    case ERROR_LOADING_REDEEMABLE:
+      return "couldn't load redeemable";
 
-    case ERROR_GIFT_NOT_FOUND:
-      return "gift not found or already redeemed";
+    case ERROR_REDEEMABLE_NOT_FOUND:
+      return "redeemable not found or already redeemed";
 
     default:
       return "something went wrong";
@@ -79,7 +79,7 @@ export default function(ownProps: any) {
   }, shallowEqual);
 
   useEffect(() => {
-    dispatch(loadGift(bucketAddress, recipientAddress));
+    dispatch(loadRedeemable(bucketAddress, recipientAddress));
   }, [bucketAddress, recipientAddress]);
 
   if (props.error) {

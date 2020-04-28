@@ -12,13 +12,13 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
   constructor(
     address _tokenAddress,
     uint256 _startTime,
-    uint256 _expirationTime) Bucket("KeycardNFTGift", _tokenAddress, _startTime, _expirationTime) public {}
+    uint256 _expirationTime) Bucket("KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime) public {}
 
-  function transferRedeemable(uint256 data, Redeem memory redeem) override internal {
+  function transferRedeemable(uint256 data, Redeem memory redeem) internal override {
     IERC721(tokenAddress).safeTransferFrom(address(this), redeem.receiver, data);
   }
 
-  function transferRedeemablesToOwner() override internal {
+  function transferRedeemablesToOwner() internal override {
     IERC721(tokenAddress).setApprovalForAll(owner, true);
     assert(IERC721(tokenAddress).isApprovedForAll(address(this), owner));
   }
@@ -29,7 +29,7 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
 
   function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
     require(msg.sender == tokenAddress, "only the NFT contract can call this");
-    require((_operator == owner) || (_from == owner), "only the owner can create gifts");
+    require((_operator == owner) || (_from == owner), "only the owner can create redeemables");
     require(_data.length == 52, "invalid data field");
 
     bytes memory d = _data;
@@ -44,12 +44,12 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
 
     address recipient = address(uint160(uint256(tmp)));
 
-    Gift storage gift = gifts[recipient];
-    require(gift.recipient == address(0), "recipient already used");
+    Redeemable storage redeemable = redeemables[recipient];
+    require(redeemable.recipient == address(0), "recipient already used");
 
-    gift.recipient = recipient;
-    gift.code = code;
-    gift.data = _tokenID;
+    redeemable.recipient = recipient;
+    redeemable.code = code;
+    redeemable.data = _tokenID;
 
     return _ERC721_RECEIVED;
   }

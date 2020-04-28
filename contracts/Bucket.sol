@@ -13,7 +13,7 @@ abstract contract Bucket {
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
   bytes32 DOMAIN_SEPARATOR;
 
-  struct Gift {
+  struct Redeemable {
     address recipient;
     bytes32 code;
     uint256 data;
@@ -26,7 +26,7 @@ abstract contract Bucket {
     bytes32 code;
   }
 
-  mapping(address => Gift) public gifts;
+  mapping(address => Redeemable) public redeemables;
 
   modifier onlyOwner() {
     require(msg.sender == owner, "owner required");
@@ -67,16 +67,16 @@ abstract contract Bucket {
 
     address recipient = recoverSigner(DOMAIN_SEPARATOR, _redeem, _sig);
 
-    Gift storage gift = gifts[recipient];
-    require(gift.recipient == recipient, "not found");
+    Redeemable storage redeemable = redeemables[recipient];
+    require(redeemable.recipient == recipient, "not found");
 
-    validateCode(_redeem, gift.code);
+    validateCode(_redeem, redeemable.code);
 
-    uint256 data = gift.data;
+    uint256 data = redeemable.data;
 
-    gift.recipient = address(0);
-    gift.code = 0;
-    gift.data = 0;
+    redeemable.recipient = address(0);
+    redeemable.code = 0;
+    redeemable.data = 0;
 
     transferRedeemable(data, _redeem);
   }
@@ -109,7 +109,7 @@ abstract contract Bucket {
     require(_redeem.blockNumber >= (block.number - _maxTxDelayInBlocks), "transaction too old");
     require(_redeem.blockHash == blockhash(_redeem.blockNumber), "invalid block hash");
 
-    require(block.timestamp < _expirationTime, "expired gift");
+    require(block.timestamp < _expirationTime, "expired redeemable");
     require(block.timestamp > _startTime, "reedeming not yet started");
   }
 
