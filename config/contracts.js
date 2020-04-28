@@ -33,7 +33,7 @@ module.exports = {
       TestToken: {
         args: ["TEST", 18],
       },
-      GiftBucketFactory: {
+      ERC20BucketFactory: {
         params: [],
       },
     }
