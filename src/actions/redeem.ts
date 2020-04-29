@@ -1,12 +1,12 @@
 import { RootState } from '../reducers';
-import ERC20Bucket from '../../../embarkArtifacts/contracts/ERC20Bucket';
-import IERC20Detailed from '../../../embarkArtifacts/contracts/IERC20Detailed';
+import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 import { newBucketContract } from "./bucket";
 import { sha3 } from "web3-utils";
 import { recoverTypedSignature } from 'eth-sig-util';
 import { Web3Type } from "../actions/web3";
+import { KECCAK_EMPTY_STRING } from '../utils';
 
 const sleep = (ms: number) => {
   return new Promise(resolve => {
@@ -91,31 +91,37 @@ const redeemDone = (txHash: string) => ({
   txHash,
 });
 
-export const redeem = (bucketAddress: string, recipientAddress: string, code: string) => {
+export const redeem = (bucketAddress: string, recipientAddress: string, cleanCode: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
+    let finalCode;
+    if (cleanCode === "") {
+      finalCode = KECCAK_EMPTY_STRING;
+    } else {
+      finalCode = sha3(cleanCode);
+    }
+
     dispatch(redeeming());
     const state = getState();
     const web3Type = state.web3.type;
-    const bucketAddress = state.bucket.address;
+
     const bucket = newBucketContract(bucketAddress);
-    const codeHash = sha3(code);
     const account = state.web3.account;
     const block = await config.web3!.eth.getBlock("latest");
 
     const message = {
-      receiver: state.web3.account,
-      code: codeHash,
+      receiver: state.web3.account!,
+      code: finalCode!,
       blockNumber: block.number,
       blockHash:  block.hash,
     };
 
     //FIXME: is signer needed?
-    signRedeem(web3Type, bucketAddress, state.web3.account, message).then(async ({ sig, address }: SignRedeemResponse) => {
-      const recipient = state.bucket.recipient;
+    signRedeem(web3Type, bucketAddress, state.web3.account!, message).then(async ({ sig, address }: SignRedeemResponse) => {
+      const recipient = state.bucket.recipient!;
       //FIXME: remove! hack to wait for the request screen to slide down
       await sleep(3000);
 
-      if (address.toLowerCase() != recipient.toLowerCase()) {
+      if (address.toLowerCase() !== recipient.toLowerCase()) {
         //FIXME: handle error
         dispatch(wrongSigner(recipient, address));
         return;
@@ -123,13 +129,16 @@ export const redeem = (bucketAddress: string, recipientAddress: string, code: st
 
       const redeem = bucket.methods.redeem(message, sig);
       const gas = await redeem.estimateGas();
-      redeem.send({ from: account, gas }).then(resp => {
+      redeem.send({
+        from: account,
+        gas
+      }).then((resp: any) => {
         dispatch(redeemDone(resp.transactionHash));
-      }).catch(err => {
+      }).catch((err: string) => {
         console.error("redeem error: ", err);
         dispatch(redeemError(err))
       });
-    }).catch(err => {
+    }).catch((err: string) => {
       console.error("sign redeem error: ", err);
       dispatch(redeemError(err))
     });
@@ -183,7 +192,7 @@ const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> =>
       method: "eth_signTypedData_v3",
       params: [signer, JSON.stringify(data)],
       from: signer,
-    }, (err, resp) => {
+    }, (err: string, resp: any) => {
       if (err) {
         reject(err);
       } else {
@@ -201,14 +210,14 @@ const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> =>
 
 const signWithKeycard = (signer: string, data: any): Promise<SignRedeemResponse> => {
   return new Promise((resolve, reject) => {
-    (window as any).ethereum.send("keycard_signTypedData", [signer, JSON.stringify(data)]).then(resp => {
+    (window as any).ethereum.send("keycard_signTypedData", [signer, JSON.stringify(data)]).then((resp: any) => {
       const sig = resp.result;
       const address = recoverTypedSignature({
         data,
         sig
       });
       resolve({ sig, address });
-    }).catch(err => {
+    }).catch((err: string) => {
       reject(err);
     })
   });

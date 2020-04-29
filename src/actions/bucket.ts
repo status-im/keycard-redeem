@@ -1,8 +1,7 @@
 import { RootState } from '../reducers';
-import ERC20Bucket from '../../../embarkArtifacts/contracts/ERC20Bucket';
-import IERC20Detailed from '../../../embarkArtifacts/contracts/IERC20Detailed';
+import ERC20Bucket from '../embarkArtifacts/contracts/ERC20Bucket';
+import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
-import { Contract } from 'web3-eth-contract';
 import { Dispatch } from 'redux';
 
 export const ERROR_REDEEMABLE_NOT_FOUND = "ERROR_REDEEMABLE_NOT_FOUND";
@@ -129,9 +128,10 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
   return async (dispatch: Dispatch, getState: () => RootState) => {
     dispatch(loadingRedeemable(bucketAddress, recipientAddress));
     const bucket = newBucketContract(bucketAddress);
-    bucket.methods.expirationTime().call().then(expirationTime => {
+    bucket.methods.expirationTime().call().then((expirationTime: number) => {
       bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
-        const { recipient, amount, code } = result;
+        const { recipient, data, code } = result;
+        const amount = data;
         if (amount === "0") {
           dispatch(redeemableNotFound())
           return;
@@ -139,20 +139,21 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
 
         dispatch(redeemableLoaded(expirationTime, recipient, amount, code));
         dispatch<any>(loadToken(bucket))
-      }).catch(err => {
+      }).catch((err: string) => {
         dispatch(errorLoadingRedeemable(err))
         console.error("err: ", err)
       })
-    }).catch(err => {
+    }).catch((err: string) => {
       dispatch(errorLoadingRedeemable(`error loading expirationTime: ${err}`))
       console.error("err: ", err)
     });
   };
 };
 
-export const loadToken = (bucket: Contract) => {
+//FIXME: set the proper Contract type
+export const loadToken = (bucket: any) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
-    bucket.methods.tokenContract().call().then(async (address: string) => {
+    bucket.methods.tokenAddress().call().then(async (address: string) => {
       const erc20Abi = IERC20Detailed.options.jsonInterface;
       const erc20 = new config.web3!.eth.Contract(erc20Abi, address);
       dispatch(loadingToken(address));

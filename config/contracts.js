@@ -36,6 +36,19 @@ module.exports = {
       ERC20BucketFactory: {
         params: [],
       },
+      ERC20Bucket: {
+        params: [],
+        proxyFor: "Bucket",
+        deploy: false,
+      },
+      NFTBucketFactory: {
+        params: [],
+      },
+      NFTBucket: {
+        params: [],
+        proxyFor: "Bucket",
+        deploy: false,
+      },
     }
   },
 
