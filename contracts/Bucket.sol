@@ -67,14 +67,21 @@ abstract contract Bucket {
   function bucketType() virtual external returns (uint256);
 
   function redeem(Redeem calldata _redeem, bytes calldata _sig) external {
-    validateRedeem(_redeem, maxTxDelayInBlocks, expirationTime, startTime);
+    // validate Redeem
+    require(_redeem.blockNumber < block.number, "transaction cannot be in the future");
+    require(_redeem.blockNumber >= (block.number - maxTxDelayInBlocks), "transaction too old");
+    require(_redeem.blockHash == blockhash(_redeem.blockNumber), "invalid block hash");
+    require(block.timestamp < expirationTime, "expired redeemable");
+    require(block.timestamp > startTime, "reedeming not yet started");
 
     address recipient = recoverSigner(DOMAIN_SEPARATOR, _redeem, _sig);
 
     Redeemable storage redeemable = redeemables[recipient];
     require(redeemable.recipient == recipient, "not found");
 
-    validateCode(_redeem, redeemable.code);
+    // validate code
+    bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
+    require(codeHash == redeemable.code, "invalid code");
 
     uint256 data = redeemable.data;
 
@@ -107,15 +114,6 @@ abstract contract Bucket {
 
   function validateExpired(uint256 _expirationTime) internal view {
     require(block.timestamp >= _expirationTime, "not expired yet");
-  }
-
-  function validateRedeem(Redeem memory _redeem, uint256 _maxTxDelayInBlocks, uint256 _expirationTime, uint256 _startTime) internal view {
-    require(_redeem.blockNumber < block.number, "transaction cannot be in the future");
-    require(_redeem.blockNumber >= (block.number - _maxTxDelayInBlocks), "transaction too old");
-    require(_redeem.blockHash == blockhash(_redeem.blockNumber), "invalid block hash");
-
-    require(block.timestamp < _expirationTime, "expired redeemable");
-    require(block.timestamp > _startTime, "reedeming not yet started");
   }
 
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {
@@ -154,10 +152,5 @@ abstract contract Bucket {
     ));
 
     return ecrecover(digest, v, r, s);
-  }
-
-  function validateCode(Redeem memory _redeem, bytes32 _code) internal pure {
-    bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
-    require(codeHash == _code, "invalid code");
   }
 }
