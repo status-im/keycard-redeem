@@ -50,4 +50,8 @@ contract ERC20Bucket is Bucket {
     bool success = IERC20(tokenAddress).transfer(owner, this.totalSupply());
     assert(success);
   }
+
+  function bucketType() external override returns (uint256) {
+    return 20;
+  }
 }

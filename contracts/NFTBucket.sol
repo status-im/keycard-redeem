@@ -23,6 +23,10 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
     assert(IERC721(tokenAddress).isApprovedForAll(address(this), owner));
   }
 
+  function bucketType() external override returns (uint256) {
+    return 721;
+  }
+
   function supportsInterface(bytes4 interfaceID) external override(IERC165) view returns (bool) {
       return interfaceID == _ERC721_RECEIVED;
   }

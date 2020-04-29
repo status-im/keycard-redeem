@@ -64,6 +64,8 @@ abstract contract Bucket {
 
   function transferRedeemablesToOwner() virtual internal;
 
+  function bucketType() virtual external returns (uint256);
+
   function redeem(Redeem calldata _redeem, bytes calldata _sig) external {
     validateRedeem(_redeem, maxTxDelayInBlocks, expirationTime, startTime);
 

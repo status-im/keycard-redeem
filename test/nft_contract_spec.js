@@ -157,6 +157,12 @@ contract("NFTBucket", function () {
     });
   });
 
+  it("return correct bucket type", async function () {
+    let bucketType = await NFTBucket.methods.bucketType().call();
+    assert(parseInt(bucketType), 721);
+  });
+
+
   function createRedeemableData(recipient) {
       const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
       return recipient + redeemCodeHash.replace("0x", "");
