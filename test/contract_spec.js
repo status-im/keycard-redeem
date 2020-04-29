@@ -276,11 +276,13 @@ contract("ERC20Bucket", function () {
     const sig = await signRedeem(ERC20Bucket._address, signer, message);
     const redeem = ERC20Bucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
-    await redeem.send({
+    let receipt = await redeem.send({
       from: relayer,
       gas: redeemGas,
     });
 
+    assert.equal(receipt.events.Redeemed.returnValues.recipient, recipient);
+    assert.equal(receipt.events.Redeemed.returnValues.data, redeemable.data);
 
     let expectedBucketBalance = parseInt(initialBucketBalance) - amount;
     let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();

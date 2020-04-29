@@ -221,10 +221,13 @@ contract("NFTBucket", function () {
     const sig = await signRedeem(NFTBucket._address, signer, message);
     const redeem = NFTBucket.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
-    await redeem.send({
+    let receipt = await redeem.send({
       from: relayer,
       gas: redeemGas,
     });
+
+    assert.equal(receipt.events.Redeemed.returnValues.recipient, recipient);
+    assert.equal(receipt.events.Redeemed.returnValues.data, tokenID);
 
     let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
     assert.equal(tokenOwner, receiver, `Token owner is ${tokenOwner} instead of the expected ${receiver}`);

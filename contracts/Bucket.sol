@@ -26,6 +26,8 @@ abstract contract Bucket {
     bytes32 code;
   }
 
+  event Redeemed(address indexed recipient, uint256 indexed data);
+
   mapping(address => Redeemable) public redeemables;
 
   modifier onlyOwner() {
@@ -79,6 +81,7 @@ abstract contract Bucket {
     redeemable.data = 0;
 
     transferRedeemable(data, _redeem);
+    emit Redeemed(recipient, data);
   }
 
   function kill() external onlyOwner {
