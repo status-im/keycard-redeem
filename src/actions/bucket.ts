@@ -1,5 +1,6 @@
 import { RootState } from '../reducers';
 import ERC20Bucket from '../embarkArtifacts/contracts/ERC20Bucket';
+import Bucket from '../embarkArtifacts/contracts/Bucket';
 import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
 import { Dispatch } from 'redux';
@@ -113,15 +114,15 @@ export const tokenLoaded = (symbol: string, decimals: number): BucketTokenLoaded
 });
 
 export const newBucketContract = (address: string) => {
-  const bucketAbi = ERC20Bucket.options.jsonInterface;
+  const bucketAbi = Bucket.options.jsonInterface;
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
 }
 
-const newERC20Contract = (address: string) => {
-  const erc20Abi = IERC20Detailed.options.jsonInterface;
-  const erc20 = new config.web3!.eth.Contract(erc20Abi, address);
-  return erc20;
+export const newERC20BucketContract = (address: string) => {
+  const bucketAbi = ERC20Bucket.options.jsonInterface;
+  const bucket = new config.web3!.eth.Contract(bucketAbi, address);
+  return bucket;
 }
 
 export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
@@ -152,6 +153,27 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
 
 //FIXME: set the proper Contract type
 export const loadToken = (bucket: any) => {
+  return (dispatch: Dispatch, getState: () => RootState) => {
+    bucket.methods.bucketType().call().then((type: string) => {
+      switch (type) {
+        case "20":
+          dispatch<any>(loadERC20Token(bucket));
+          break;
+        case "721":
+          dispatch<any>(loadERC20Token(bucket));
+          break;
+        default:
+          //FIXME: manage error
+          console.error("unknown bucket type ", type);
+      }
+    }).catch((err: string) => {
+      //FIXME: manage error
+      console.error("ERROR: ", err);
+    })
+  }
+};
+
+export const loadERC20Token = (bucket: any) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.tokenAddress().call().then(async (address: string) => {
       const erc20Abi = IERC20Detailed.options.jsonInterface;
