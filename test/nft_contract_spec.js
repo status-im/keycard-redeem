@@ -159,7 +159,7 @@ contract("NFTBucket", function () {
 
   it("return correct bucket type", async function () {
     let bucketType = await NFTBucket.methods.bucketType().call();
-    assert(parseInt(bucketType), 721);
+    assert.equal(parseInt(bucketType), 721);
   });
 
 

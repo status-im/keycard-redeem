@@ -158,7 +158,7 @@ contract("ERC20Bucket", function () {
 
   it("return correct bucket type", async function () {
     let bucketType = await ERC20Bucket.methods.bucketType().call();
-    assert(parseInt(bucketType), 20);
+    assert.equal(parseInt(bucketType), 20);
   });
 
   it("shop buys 100 tokens", async function () {
