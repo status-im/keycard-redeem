@@ -1,4 +1,3 @@
-import EmbarkJS from 'Embark/EmbarkJS';
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import thunkMiddleware from 'redux-thunk';
@@ -41,23 +40,21 @@ const store = createStore(
   applyMiddleware(...middlewares),
 );
 
-EmbarkJS.onReady(err => {
-  store.dispatch<any>(initializeWeb3());
+store.dispatch<any>(initializeWeb3());
 
-  ReactDOM.render(
-    <ErrorBoundary>
-      <Provider store={store}>
-        <App>
-          <ConnectedRouter history={history}>
-            <Switch>
-              <Route exact path="/"><Home /></Route>
-              <Route exact path={redeemPath}><Redeem /></Route>
-              <Route render={() => "page not found"} />
-            </Switch>
-          </ConnectedRouter>
-        </App>
-      </Provider>
-    </ErrorBoundary>,
-    document.getElementById("root")
-  );
-});
+ReactDOM.render(
+  <ErrorBoundary>
+    <Provider store={store}>
+      <App>
+        <ConnectedRouter history={history}>
+          <Switch>
+            <Route exact path="/"><Home /></Route>
+            <Route exact path={redeemPath}><Redeem /></Route>
+            <Route render={() => "page not found"} />
+          </Switch>
+        </ConnectedRouter>
+      </App>
+    </Provider>
+  </ErrorBoundary>,
+  document.getElementById("root")
+);

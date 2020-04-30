@@ -7,7 +7,5 @@ export default function() {
   const dispatch = useDispatch();
 
   return <>
-    <p>
-    </p>
   </>;
 }

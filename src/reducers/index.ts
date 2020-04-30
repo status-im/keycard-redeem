@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
 import { connectRouter } from 'connected-react-router';
+import { History } from 'history';
 import {
   Web3State,
   web3Reducer,
@@ -19,7 +20,7 @@ export interface RootState {
   redeem: RedeemState,
 }
 
-export default function(history) {
+export default function(history: History) {
   return combineReducers({
     web3: web3Reducer,
     router: connectRouter(history),

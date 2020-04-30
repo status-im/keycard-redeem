@@ -1,9 +1,9 @@
 import React from 'react';
-import ERC20BucketFactory from '../../../embarkArtifacts/contracts/ERC20BucketFactory';
+import ERC20BucketFactory from '../embarkArtifacts/contracts/ERC20BucketFactory';
+import { RootState } from '../reducers';
 import {
   shallowEqual,
   useSelector,
-  useDispatch,
 } from 'react-redux';
 import { Web3Type } from "../actions/web3";
 
@@ -21,7 +21,7 @@ const web3Type = (t: Web3Type) => {
 }
 
 export default function(ownProps: any) {
-  const props = useSelector(state => {
+  const props = useSelector((state: RootState) => {
     return {
       initialized: state.web3.networkID,
       networkID: state.web3.networkID,
@@ -31,11 +31,11 @@ export default function(ownProps: any) {
   }, shallowEqual);
 
   if (props.error) {
-    return `Error: ${props.error}`;
+    return <>Error: {props.error}</>;
   }
 
   if (!props.initialized) {
-    return "initializing...";
+    return <>initializing...</>;
   }
 
   return <>

@@ -1,6 +1,9 @@
-import Web3Utils from "web3-utils";
+import { sha3 } from "web3-utils";
+import BN from "bn.js";
 
-const BN = Web3Utils.BN;
+// keccak256("")
+export const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+export const KECCAK_EMPTY_STRING2 = sha3(KECCAK_EMPTY_STRING);
 
 export const toBaseUnit = (fullAmount: string, decimalsSize: number, roundDecimals: number) => {
   const amount = new BN(fullAmount);

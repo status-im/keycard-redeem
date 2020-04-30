@@ -13,15 +13,16 @@ import {
   ERROR_LOADING_REDEEMABLE,
   ERROR_REDEEMABLE_NOT_FOUND,
 } from '../actions/bucket';
-import { toBaseUnit } from "../utils";
+import {
+  toBaseUnit,
+  KECCAK_EMPTY_STRING2,
+} from "../utils";
 import {
   redeem,
   RedeemErrors,
   ERROR_REDEEMING,
   ERROR_WRONG_SIGNER,
 } from '../actions/redeem';
-
-const REDEEM_CODE = "hello world";
 
 const buckerErrorMessage = (error: BucketErrors): string => {
   switch (error.type) {
@@ -49,12 +50,22 @@ const redeemErrorMessage = (error: RedeemErrors): string => {
   }
 }
 
+interface URLParams {
+  bucketAddress: string
+  recipientAddress: string
+}
+
 export default function(ownProps: any) {
   const dispatch = useDispatch()
-  const match = useRouteMatch({
+
+  const match = useRouteMatch<URLParams>({
     path: redeemPath,
     exact: true,
   });
+
+  if (match === null) {
+    return null;
+  }
 
   const bucketAddress = match.params.bucketAddress;
   const recipientAddress = match.params.recipientAddress;
@@ -78,30 +89,32 @@ export default function(ownProps: any) {
     }
   }, shallowEqual);
 
+  const emptyCode = props.codeHash === KECCAK_EMPTY_STRING2;
+
   useEffect(() => {
     dispatch(loadRedeemable(bucketAddress, recipientAddress));
-  }, [bucketAddress, recipientAddress]);
+  }, [dispatch, bucketAddress, recipientAddress]);
 
   if (props.error) {
-    return `Error: ${buckerErrorMessage(props.error)}`;
+    return <>Error: {buckerErrorMessage(props.error)}</>;
   }
 
   if (props.loading) {
-    return "loading bucket...";
+    return <>loading bucket...</>;
   }
 
   if (props.tokenSymbol === undefined || props.tokenDecimals === undefined) {
-    return "loading token info...";
+    return <>loading token info...</>;
   }
 
-  const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount, props.tokenDecimals, 2);
+  const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount!, props.tokenDecimals, 2);
 
   return <>
     Bucket Address: {props.bucketAddress}<br />
     Recipient: {props.recipient}<br />
     Amount: {props.amount}<br />
-    Expiration Time: {new Date(props.expirationTime * 1000).toLocaleDateString("default", {hour: "numeric", minute: "numeric"})}<br />
-    Code Hash: {props.codeHash}<br />
+    Expiration Time: {new Date(props.expirationTime! * 1000).toLocaleDateString("default", {hour: "numeric", minute: "numeric"})}<br />
+    Code Hash: {props.codeHash} {emptyCode ? "(empty string)" : ""}<br />
     Token Address: {props.tokenAddress}<br />
     Token Symbol: {props.tokenSymbol}<br />
     Token Decimals: {props.tokenDecimals}<br />
@@ -112,7 +125,7 @@ export default function(ownProps: any) {
     <br /><br /><br />
     <button
       disabled={props.redeeming}
-      onClick={() => dispatch(redeem(bucketAddress, recipientAddress, REDEEM_CODE))}>
+      onClick={() => dispatch(redeem(bucketAddress, recipientAddress, ""))}>
       {props.redeeming ? "Redeeming..." : "Redeem"}
     </button>
     <br />
