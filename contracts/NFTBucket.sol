@@ -12,7 +12,8 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
   constructor(
     address _tokenAddress,
     uint256 _startTime,
-    uint256 _expirationTime) Bucket("KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime) public {}
+    uint256 _expirationTime,
+    uint256 _maxTxDelayInBlocks) Bucket("KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks) public {}
 
   function transferRedeemable(uint256 data, Redeem memory redeem) internal override {
     IERC721(tokenAddress).safeTransferFrom(address(this), redeem.receiver, data);

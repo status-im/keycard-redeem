@@ -4,15 +4,15 @@ import Web3 from 'web3';
 import parseArgs from 'minimist';
 import fs from 'fs';
 
-const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365}});
+const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10}});
 
 const web3 = new Web3(argv["endpoint"]);
 
 const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
-const BucketConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}Bucket.js`);
-const BucketFactoryConfig = loadEmbarkArtifact(`./embarkArtifacts/contracts/${classPrefix}BucketFactory.js`);
-const IERC721 = loadEmbarkArtifact(`./embarkArtifacts/contracts/IERC721.js`);
+const BucketConfig = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/${classPrefix}Bucket.js`);
+const BucketFactoryConfig = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/${classPrefix}BucketFactory.js`);
+const IERC721 = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/IERC721.js`);
 
 const BucketFactory = new web3.eth.Contract(BucketFactoryConfig["abiDefinition"]);
 const Bucket = new web3.eth.Contract(BucketConfig["abiDefinition"]);
@@ -59,13 +59,13 @@ async function deployFactory(sender) {
     return receipt.contractAddress;
 }
 
-async function deployBucket(sender, factory, token, startInDays, validityInDays) {
+async function deployBucket(sender, factory, token, startInDays, validityInDays, maxTxDelayBlocks) {
     let now = Math.round(new Date().getTime() / 1000);
     let startDate = now + (60 * 60 * 24 * startInDays);
     let expirationDate = now + (60 * 60 * 24 * validityInDays);
 
     BucketFactory.options.address = factory;
-    let methodCall = BucketFactory.methods.create(token.toLowerCase(), startDate, expirationDate);
+    let methodCall = BucketFactory.methods.create(token.toLowerCase(), startDate, expirationDate, maxTxDelayBlocks);
 
     try {
         let receipt = await sendMethod(methodCall, sender, BucketFactory.options.address);
@@ -172,7 +172,7 @@ async function run() {
             process.exit(1);
         }
 
-        bucket = await deployBucket(sender, factory, argv["token"], argv["start-in-days"], argv["validity-days"]);
+        bucket = await deployBucket(sender, factory, argv["token"], argv["start-in-days"], argv["validity-days"], argv["max-tx-delay-blocks"]);
         hasDoneSomething = true;
         console.log("Bucket deployed at: " + bucket);
     } else {

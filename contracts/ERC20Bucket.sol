@@ -10,7 +10,8 @@ contract ERC20Bucket is Bucket {
   constructor(
     address _tokenAddress,
     uint256 _startTime,
-    uint256 _expirationTime) Bucket("KeycardERC20Bucket", _tokenAddress, _startTime, _expirationTime) public {}
+    uint256 _expirationTime,
+    uint256 _maxTxDelayInBlocks) Bucket("KeycardERC20Bucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks) public {}
 
   function totalSupply() public view returns(uint256) {
     return IERC20(tokenAddress).balanceOf(address(this));

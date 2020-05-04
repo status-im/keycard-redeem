@@ -9,6 +9,7 @@ const REDEEM_CODE = web3.utils.sha3("hello world");
 const NOW = Math.round(new Date().getTime() / 1000);
 const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
+const MAX_TX_DELAY_BLOCKS = 10;
 
 let shop,
     user,
@@ -23,7 +24,7 @@ config({
         args: [],
       },
       "NFTBucket": {
-        args: ["$TestNFT", START_TIME, EXPIRATION_TIME],
+        args: ["$TestNFT", START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS],
       },
       "NFTBucketFactory": {
         args: [],
@@ -134,7 +135,7 @@ contract("NFTBucket", function () {
   it("deploy bucket", async () => {
     // only to test gas
     const deploy = _NFTBucket.deploy({
-      arguments: [TestNFT._address, START_TIME, EXPIRATION_TIME]
+      arguments: [TestNFT._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
     });
 
     const gas = await deploy.estimateGas();
@@ -142,7 +143,7 @@ contract("NFTBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = NFTBucketFactory.methods.create(TestNFT._address, START_TIME, EXPIRATION_TIME);
+    const create = NFTBucketFactory.methods.create(TestNFT._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,

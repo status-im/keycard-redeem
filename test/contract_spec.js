@@ -9,6 +9,7 @@ const REDEEM_CODE = web3.utils.sha3("hello world");
 const NOW = Math.round(new Date().getTime() / 1000);
 const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
+const MAX_TX_DELAY_BLOCKS = 10;
 
 let shop,
     user,
@@ -23,7 +24,7 @@ config({
         args: ["TEST", 18],
       },
       "ERC20Bucket": {
-        args: ["$TestToken", START_TIME, EXPIRATION_TIME],
+        args: ["$TestToken", START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS],
       },
       "ERC20BucketFactory": {
         args: [],
@@ -133,7 +134,7 @@ contract("ERC20Bucket", function () {
   it("deploy bucket", async () => {
     // only to test gas
     const deploy = _ERC20Bucket.deploy({
-      arguments: [TestToken._address, START_TIME, EXPIRATION_TIME]
+      arguments: [TestToken._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
     });
 
     const gas = await deploy.estimateGas();
@@ -141,7 +142,7 @@ contract("ERC20Bucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = ERC20BucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME);
+    const create = ERC20BucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,

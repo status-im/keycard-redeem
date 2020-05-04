@@ -7,8 +7,8 @@ abstract contract Bucket {
   address public tokenAddress;
   uint256 public expirationTime;
   uint256 public startTime;
+  uint256 public maxTxDelayInBlocks;
 
-  uint256 constant maxTxDelayInBlocks = 10;
   bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(uint256 blockNumber,bytes32 blockHash,address receiver,bytes32 code)");
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
   bytes32 DOMAIN_SEPARATOR;
@@ -35,18 +35,19 @@ abstract contract Bucket {
     _;
   }
 
-  constructor(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime) public {
-    initialize(_eip712DomainName, _tokenAddress, _startTime, _expirationTime, msg.sender);
+  constructor(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks) public {
+    initialize(_eip712DomainName, _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks, msg.sender);
   }
 
-  function initialize(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, address _owner) public {
+  function initialize(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks, address _owner) public {
     require(initialized == false, "already initialized");
-
-    validateExpiryDate(_expirationTime);
+    require(_maxTxDelayInBlocks > 0 && _maxTxDelayInBlocks < 256, "the valid range is 1 to 255");
+    require(_expirationTime > block.timestamp, "expiration can't be in the past");
 
     tokenAddress = _tokenAddress;
     startTime = _startTime;
     expirationTime = _expirationTime;
+    maxTxDelayInBlocks = _maxTxDelayInBlocks;
     owner = payable(_owner);
 
     DOMAIN_SEPARATOR = keccak256(abi.encode(
@@ -94,7 +95,7 @@ abstract contract Bucket {
   }
 
   function kill() external onlyOwner {
-    validateExpired(expirationTime);
+    require(block.timestamp >= expirationTime, "not expired yet");
     transferRedeemablesToOwner();
     selfdestruct(owner);
   }
@@ -106,14 +107,6 @@ abstract contract Bucket {
     }
 
     return id;
-  }
-
-  function validateExpiryDate(uint256 _expirationTime) internal view {
-    require(_expirationTime > block.timestamp, "expiration can't be in the past");
-  }
-
-  function validateExpired(uint256 _expirationTime) internal view {
-    require(block.timestamp >= _expirationTime, "not expired yet");
   }
 
   function hashRedeem(Redeem memory _redeem) internal pure returns (bytes32) {
