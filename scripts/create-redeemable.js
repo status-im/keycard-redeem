@@ -10,9 +10,9 @@ const web3 = new Web3(argv["endpoint"]);
 
 const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
-const BucketConfig = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/${classPrefix}Bucket.js`);
-const BucketFactoryConfig = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/${classPrefix}BucketFactory.js`);
-const IERC721 = loadEmbarkArtifact(`./src/embarkArtifacts/contracts/IERC721.js`);
+const BucketConfig = loadEmbarkArtifact(`./dist/contracts/${classPrefix}Bucket.json`);
+const BucketFactoryConfig = loadEmbarkArtifact(`./dist/contracts/${classPrefix}BucketFactory.json`);
+const IERC721 = loadEmbarkArtifact(`./dist/contracts/IERC721.json`);
 
 const BucketFactory = new web3.eth.Contract(BucketFactoryConfig["abiDefinition"]);
 const Bucket = new web3.eth.Contract(BucketConfig["abiDefinition"]);
@@ -20,8 +20,7 @@ const ERC721 = new web3.eth.Contract(IERC721["abiDefinition"]);
 
 function loadEmbarkArtifact(path) {
     let file = fs.readFileSync(path, "utf-8");
-    let json = file.replace(/import.*/, "").replace(/.*EmbarkJS.Blockchain.*/, "").replace(/export default.*/, "").replace(/const[^=]*= /, "").replace(/;/, "").trim();
-    let loadedAsset = JSON.parse(json);
+    let loadedAsset = JSON.parse(file);
     return loadedAsset;
 }
 
