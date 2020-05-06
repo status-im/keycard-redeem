@@ -3,6 +3,7 @@
 import Web3 from 'web3';
 import parseArgs from 'minimist';
 import fs from 'fs';
+import { keccak256 } from 'js-sha3';
 
 const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10}});
 
@@ -115,9 +116,17 @@ async function transferNFT(sender, token, bucket, keycard) {
     }
 }
 
+function processCode(code) {
+    if (!code.startsWith("0x")) {
+        code = "0x" + Buffer.from(code, 'utf8').toString('hex');
+    }
+
+    return "0x" + keccak256(code);
+}
+
 function processLine(line) {
     let c = line.split(",").map((e) => e.toLowerCase().trim());
-    return {keycard: c[0], amount: parseInt(c[1]), code: c[2]};
+    return {keycard: c[0], amount: parseInt(c[1]), code: processCode(c[2])};
 }
 
 async function run() {
