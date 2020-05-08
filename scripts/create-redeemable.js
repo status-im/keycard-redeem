@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import Web3 from 'web3';
-import parseArgs from 'minimist';
-import fs from 'fs';
-import { keccak256 } from 'js-sha3';
-import BigNumber from 'bignumber.js'
+const Web3 = require('web3');
+const parseArgs = require('minimist');
+const fs = require('fs');
+const keccak256 = require('js-sha3').keccak256;
+const BigNumber = require('bignumber.js');
 
 const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10, "amount-decimals": 18}});
 
