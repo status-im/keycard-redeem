@@ -6,7 +6,7 @@ const fs = require('fs');
 const keccak256 = require('js-sha3').keccak256;
 const BigNumber = require('bignumber.js');
 
-const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10, "amount-decimals": 18}});
+const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10}});
 
 const web3 = new Web3(argv["endpoint"]);
 
@@ -137,7 +137,7 @@ function processLine(line, decimals) {
 }
 
 async function getToken(token, readIfMissing) {
-  return (token || !readIfMissing) ? token : await Bucket.methods.tokenContract().call();
+  return (token || !readIfMissing) ? token : await Bucket.methods.tokenAddress().call();
 }
 
 async function getDecimals(decimals, readIfMissing) {
