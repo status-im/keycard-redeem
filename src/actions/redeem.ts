@@ -1,5 +1,4 @@
 import { RootState } from '../reducers';
-import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 import { newBucketContract } from "./bucket";
@@ -126,7 +125,9 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       }
 
       //FIXME: remove! hack to wait for the request screen to slide down
-      await sleep(3000);
+      if (state.web3.type === Web3Type.Status) {
+        await sleep(3000);
+      }
 
       const redeem = bucket.methods.redeem(message, sig);
       // const gas = await redeem.estimateGas();
@@ -136,14 +137,12 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       }).then((resp: any) => {
         dispatch(redeemDone(resp.transactionHash));
       }).catch((err: any) => {
-        console.error("redeem error: ", err.reason);
-        console.error("redeem error reason: ", err);
-        dispatch(redeemError(err.reason))
+        dispatch(redeemError(err.reason || err.message || err))
       });
     }).catch((err: any) => {
       console.error("sign redeem error reason:", err.reason);
       console.error("sign redeem error:", err);
-      dispatch(redeemError(err))
+      dispatch(redeemError(err.reason || err.message || err))
     });
   }
 }

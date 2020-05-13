@@ -4,5 +4,6 @@ config/livenet/password
 config/production/password
 coverage
 dist
+build
 embarkArtifacts
 node_modules

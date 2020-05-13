@@ -8,7 +8,6 @@ import {
 } from 'react-redux';
 import { redeemPath } from '../config';
 import {
-  Token,
   TokenERC20,
   TokenNFT,
   loadRedeemable,
@@ -129,7 +128,7 @@ export default function(ownProps: any) {
         {token.metadata !== undefined && <>
           Name: {token.metadata.name}<br />
           Description: {token.metadata.description}<br />
-          <img src={token.metadata.image} />
+          <img src={token.metadata.image} alt={token.metadata.name} />
         </>}
       </>}<br />
     </>
