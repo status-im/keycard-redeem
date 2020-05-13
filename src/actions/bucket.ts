@@ -5,6 +5,7 @@ import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
 import IERC721Metadata from '../embarkArtifacts/contracts/IERC721Metadata';
 import { config } from "../config";
 import { Dispatch } from 'redux';
+import { ZERO_ADDRESS } from "../utils";
 
 export const ERROR_REDEEMABLE_NOT_FOUND = "ERROR_REDEEMABLE_NOT_FOUND";
 export interface ErrRedeemableNotFound {
@@ -180,7 +181,7 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
     bucket.methods.expirationTime().call().then((expirationTime: number) => {
       bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
         const { recipient, data, code } = result;
-        if (data === "0") {
+        if (recipient === ZERO_ADDRESS) {
           dispatch(redeemableNotFound())
           return;
         }
