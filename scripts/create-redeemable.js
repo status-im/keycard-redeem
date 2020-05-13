@@ -3,66 +3,32 @@
 const Web3 = require('web3');
 const parseArgs = require('minimist');
 const fs = require('fs');
+const utils = require('./utils.js');
 const keccak256 = require('js-sha3').keccak256;
 const BigNumber = require('bignumber.js');
+const Account = require('./account.js');
 
 const argv = parseArgs(process.argv.slice(2), {boolean: ["nft", "deploy-factory", "deploy-bucket"], string: ["sender", "factory", "bucket", "token"], default: {"endpoint": "ws://127.0.0.1:8546", "start-in-days": 0, "validity-days": 365, "max-tx-delay-blocks": 10}});
 
 const web3 = new Web3(argv["endpoint"]);
+const account = new Account(web3);
 
 const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
-const BucketConfig = loadJSON(`./dist/contracts/${classPrefix}Bucket.json`);
-const BucketFactoryConfig = loadJSON(`./dist/contracts/${classPrefix}BucketFactory.json`);
-const IERC721 = loadJSON(`./dist/contracts/IERC721.json`);
-const IERC20Detailed = loadJSON(`./dist/contracts/IERC20Detailed.json`);
-
+const BucketFactoryConfig = utils.loadJSON(`./dist/contracts/${classPrefix}BucketFactory.json`);
 const BucketFactory = new web3.eth.Contract(BucketFactoryConfig["abiDefinition"]);
-const Bucket = new web3.eth.Contract(BucketConfig["abiDefinition"]);
-const ERC721 = new web3.eth.Contract(IERC721["abiDefinition"]);
-const ERC20 = new web3.eth.Contract(IERC20Detailed["abiDefinition"]);
+const Bucket = utils.loadContract(web3, `./dist/contracts/${classPrefix}Bucket.json`);
+const ERC721 = utils.loadContract(web3, `./dist/contracts/IERC721.json`);
+const ERC20 = utils.loadContract(web3, `./dist/contracts/IERC20Detailed.json`);
 
-function loadJSON(path) {
-  let file = fs.readFileSync(path, "utf-8");
-  let loadedAsset = JSON.parse(file);
-  return loadedAsset;
-}
-
-async function getDefaultSender() {
-  let accounts = await web3.eth.getAccounts();
-  return accounts[0];
-}
-
-function loadAccount(account, passfile) {
-  let json = fs.readFileSync(account, "utf-8");
-  let pass = fs.readFileSync(passfile, "utf-8").split("\n")[0].replace("\r", "");
-  return web3.eth.accounts.decrypt(json, pass);
-}
-
-async function sendMethod(methodCall, sender, to) {
-  let receipt;
-
-  if (typeof(sender) == "string") {
-    let gasAmount = await methodCall.estimateGas({from: sender});
-    receipt = await methodCall.send({from: sender, gas: gasAmount});
-  } else {
-    let gasAmount = await methodCall.estimateGas({from: sender.address});
-    let data = methodCall.encodeABI();
-    let signedTx = await sender.signTransaction({to: to, data: data, gas: gasAmount});
-    receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-  }
-
-  return receipt;
-}
-
-async function deployFactory(sender) {
+async function deployFactory() {
   let code = "0x" + BucketFactoryConfig["code"];
   let methodCall = BucketFactory.deploy({data: code});
-  let receipt = await sendMethod(methodCall, sender, null);
+  let receipt = await account.sendMethod(methodCall, null);
   return receipt.contractAddress;
 }
 
-async function deployBucket(sender, factory, token, startInDays, validityInDays, maxTxDelayBlocks) {
+async function deployBucket(factory, token, startInDays, validityInDays, maxTxDelayBlocks) {
   let now = Math.round(new Date().getTime() / 1000);
   let startDate = now + (60 * 60 * 24 * startInDays);
   let expirationDate = now + (60 * 60 * 24 * validityInDays);
@@ -71,7 +37,7 @@ async function deployBucket(sender, factory, token, startInDays, validityInDays,
   let methodCall = BucketFactory.methods.create(token.toLowerCase(), startDate, expirationDate, maxTxDelayBlocks);
 
   try {
-    let receipt = await sendMethod(methodCall, sender, BucketFactory.options.address);
+    let receipt = await account.sendMethod(methodCall, BucketFactory.options.address);
     return receipt.events.BucketCreated.returnValues.bucket;
   } catch(err) {
     console.error(err);
@@ -79,11 +45,11 @@ async function deployBucket(sender, factory, token, startInDays, validityInDays,
   }
 }
 
-async function createRedeemable(sender, keycard) {
+async function createRedeemable(keycard) {
   let methodCall = Bucket.methods.createRedeemable(keycard.keycard, keycard.amount, keycard.code);
 
   try {
-    let receipt = await sendMethod(methodCall, sender, Bucket.options.address);
+    let receipt = await account.sendMethod(methodCall, Bucket.options.address);
     return receipt;
   } catch(err) {
     console.error(err);
@@ -95,19 +61,11 @@ function createNFTData(keycard, code) {
   return keycard.toLowerCase() + code.replace("0x", "");
 }
 
-function senderAddress(sender) {
-  if (typeof(sender) == "string") {
-    return sender;
-  } else {
-    return sender.address;
-  }
-}
-
-async function transferNFT(sender, keycard) {
-  let methodCall = ERC721.methods.safeTransferFrom(senderAddress(sender),  Bucket.options.address, keycard.amount, createNFTData(keycard.keycard, keycard.code));
+async function transferNFT(keycard) {
+  let methodCall = ERC721.methods.safeTransferFrom(account.senderAddress(),  Bucket.options.address, keycard.amount, createNFTData(keycard.keycard, keycard.code));
 
   try {
-    let receipt = await sendMethod(methodCall, sender, ERC721.options.address);
+    let receipt = await account.sendMethod(methodCall, ERC721.options.address);
     return receipt;
   } catch(err) {
     console.error(err);
@@ -155,28 +113,14 @@ async function run() {
   Bucket.transactionConfirmationBlocks = 3;
   ERC721.transactionConfirmationBlocks = 3;
 
-  let sender;
   let hasDoneSomething = false;
 
-  if (argv["account"]) {
-    if (!argv["passfile"]) {
-      console.error("the ---passfile option must be specified when using the --account option");
-      process.exit(1);
-    }
-
-    if (argv["sender"]) {
-      console.warn("--account used, --sender will be ignored");
-    }
-
-    sender = loadAccount(argv["account"], argv["passfile"]);
-  } else {
-    sender = argv["sender"] || await getDefaultSender();
-  }
+  await account.init(argv);
 
   let factory;
 
   if (argv["deploy-factory"]) {
-    factory = await deployFactory(sender);
+    factory = await deployFactory();
     hasDoneSomething = true;
     console.log("Factory deployed at: " + factory);
   } else {
@@ -201,7 +145,7 @@ async function run() {
       process.exit(1);
     }
 
-    bucket = await deployBucket(sender, factory, argv["token"], argv["start-in-days"], argv["validity-days"], argv["max-tx-delay-blocks"]);
+    bucket = await deployBucket(factory, argv["token"], argv["start-in-days"], argv["validity-days"], argv["max-tx-delay-blocks"]);
     hasDoneSomething = true;
     console.log("Bucket deployed at: " + bucket);
   } else {
@@ -224,7 +168,7 @@ async function run() {
     keycards = file.split("\n").map((line) => processLine(line, decimals));
 
     for (let keycard of keycards) {
-      await argv["nft"] ? transferNFT(sender, keycard) : createRedeemable(sender, keycard);
+      await argv["nft"] ? transferNFT(keycard) : createRedeemable(keycard);
     }
   } else if (!hasDoneSomething) {
     console.error("the --file option must be specified");
