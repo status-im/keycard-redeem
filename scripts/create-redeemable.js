@@ -16,7 +16,7 @@ const account = new Account(web3);
 const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
 const BucketFactoryConfig = utils.loadJSON(`./dist/contracts/${classPrefix}BucketFactory.json`);
-const BucketFactory = new web3.eth.Contract(BucketFactoryConfig["abiDefinition"]);
+const BucketFactory = utils.json2Contract(web3, BucketFactoryConfig);
 const Bucket = utils.loadContract(web3, `./dist/contracts/${classPrefix}Bucket.json`);
 const ERC721 = utils.loadContract(web3, `./dist/contracts/IERC721.json`);
 const ERC20 = utils.loadContract(web3, `./dist/contracts/IERC20Detailed.json`);
