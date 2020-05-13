@@ -74,6 +74,8 @@ export const initializeWeb3 = () => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     if (w.ethereum) {
       config.web3 = new Web3(w.ethereum);
+      (config.web3! as any).eth.handleRevert = true;
+
       w.ethereum.enable()
         .then(() => {
           const t: Web3Type = w.ethereum.isStatus ? Web3Type.Status : Web3Type.Generic;

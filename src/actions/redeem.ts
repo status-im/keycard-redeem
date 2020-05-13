@@ -91,7 +91,7 @@ const redeemDone = (txHash: string) => ({
   txHash,
 });
 
-export const redeem = (bucketAddress: string, recipientAddress: string, cleanCode: string) => {
+export const redeem = (bucketAddress: string, recipientAddress: string, cleanCode: string, isERC20: boolean) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     let finalCode;
     if (cleanCode === "") {
@@ -115,37 +115,40 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       blockHash:  block.hash,
     };
 
+    const domainName = isERC20 ? "KeycardERC20Bucket" : "KeycardNFTBucket";
     //FIXME: is signer needed?
-    signRedeem(web3Type, bucketAddress, state.web3.account!, message).then(async ({ sig, address }: SignRedeemResponse) => {
+    signRedeem(web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, address }: SignRedeemResponse) => {
       const recipient = state.bucket.recipient!;
-      //FIXME: remove! hack to wait for the request screen to slide down
-      await sleep(3000);
-
       if (address.toLowerCase() !== recipient.toLowerCase()) {
         //FIXME: handle error
         dispatch(wrongSigner(recipient, address));
         return;
       }
 
+      //FIXME: remove! hack to wait for the request screen to slide down
+      await sleep(3000);
+
       const redeem = bucket.methods.redeem(message, sig);
-      const gas = await redeem.estimateGas();
+      // const gas = await redeem.estimateGas();
       redeem.send({
         from: account,
-        gas
+        // gas
       }).then((resp: any) => {
         dispatch(redeemDone(resp.transactionHash));
-      }).catch((err: string) => {
-        console.error("redeem error: ", err);
-        dispatch(redeemError(err))
+      }).catch((err: any) => {
+        console.error("redeem error: ", err.reason);
+        console.error("redeem error reason: ", err);
+        dispatch(redeemError(err.reason))
       });
-    }).catch((err: string) => {
-      console.error("sign redeem error: ", err);
+    }).catch((err: any) => {
+      console.error("sign redeem error reason:", err.reason);
+      console.error("sign redeem error:", err);
       dispatch(redeemError(err))
     });
   }
 }
 
-async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage): Promise<SignRedeemResponse> {
+async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage, domainName: string): Promise<SignRedeemResponse> {
   const chainId = await config.web3!.eth.net.getId();
 
   const domain = [
@@ -163,7 +166,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   ];
 
   const domainData = {
-    name: "KeycardERC20Bucket",
+    name: domainName,
     version: "1",
     chainId: chainId,
     verifyingContract: contractAddress

@@ -1,4 +1,5 @@
 import {
+  Token,
   BucketActions,
   BucketErrors,
   BUCKET_REDEEMABLE_LOADING,
@@ -7,6 +8,8 @@ import {
   BUCKET_REDEEMABLE_LOADED,
   BUCKET_TOKEN_LOADING,
   BUCKET_TOKEN_LOADED,
+  BUCKET_TOKEN_METADATA_LOADING,
+  BUCKET_TOKEN_METADATA_LOADED,
 } from "../actions/bucket";
 
 export interface BucketState {
@@ -14,8 +17,8 @@ export interface BucketState {
   address: string | undefined
   expirationTime: number | undefined
   tokenAddress: string | undefined
-  tokenSymbol: string | undefined
-  tokenDecimals: number | undefined
+  token: Token | undefined
+  loadingTokenMetadata: boolean
   error: BucketErrors | undefined
   recipient: string | undefined
   amount: string | undefined
@@ -27,8 +30,8 @@ const initialState: BucketState = {
   address: undefined,
   expirationTime: undefined,
   tokenAddress: undefined,
-  tokenSymbol: undefined,
-  tokenDecimals: undefined,
+  token: undefined,
+  loadingTokenMetadata: false,
   error: undefined,
   recipient: undefined,
   amount: undefined,
@@ -83,8 +86,39 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
     case BUCKET_TOKEN_LOADED: {
       return {
         ...state,
-        tokenSymbol: action.symbol,
-        tokenDecimals: action.decimals,
+        token: action.token,
+      }
+    }
+
+    case BUCKET_TOKEN_METADATA_LOADING: {
+      if (action.tokenAddress !== state.tokenAddress || action.recipient !== state.recipient) {
+        // bucket or recipient changed before starting loading
+        return state;
+      }
+
+      return {
+        ...state,
+        loadingTokenMetadata: true,
+      }
+    }
+
+    case BUCKET_TOKEN_METADATA_LOADED: {
+      if (action.tokenAddress !== state.tokenAddress || action.recipient !== state.recipient) {
+        // bucket or recipient changed after starting loading
+        return state;
+      }
+
+      if (state.token === undefined) {
+        return state;
+      }
+
+      return {
+        ...state,
+        loadingTokenMetadata: false,
+        token: {
+          ...state.token,
+          metadata: action.metadata,
+        }
       }
     }
 

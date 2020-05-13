@@ -26,6 +26,7 @@ export default function(ownProps: any) {
       initialized: state.web3.networkID,
       networkID: state.web3.networkID,
       error: state.web3.error,
+      account: state.web3.account,
       type: state.web3.type,
     }
   }, shallowEqual);
@@ -41,7 +42,8 @@ export default function(ownProps: any) {
   return <>
     Network ID: {props.networkID} <br />
     Factory: {ERC20BucketFactory.address} <br />
-    Web3 Type: {web3Type(props.type)}
+    Account: {props.account} <br />
+    Web3 Type: {web3Type(props.type)} <br />
     <hr />
     <div>
       {ownProps.children}

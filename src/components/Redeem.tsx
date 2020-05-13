@@ -8,6 +8,9 @@ import {
 } from 'react-redux';
 import { redeemPath } from '../config';
 import {
+  Token,
+  TokenERC20,
+  TokenNFT,
   loadRedeemable,
   BucketErrors,
   ERROR_LOADING_REDEEMABLE,
@@ -16,6 +19,7 @@ import {
 import {
   toBaseUnit,
   KECCAK_EMPTY_STRING2,
+  isTokenERC20,
 } from "../utils";
 import {
   redeem,
@@ -80,8 +84,8 @@ export default function(ownProps: any) {
       amount: state.bucket.amount,
       codeHash: state.bucket.codeHash,
       tokenAddress: state.bucket.tokenAddress,
-      tokenSymbol: state.bucket.tokenSymbol,
-      tokenDecimals: state.bucket.tokenDecimals,
+      token: state.bucket.token,
+      loadingTokenMetadata: state.bucket.loadingTokenMetadata,
       receiver: state.web3.account,
       redeeming: state.redeem.loading,
       redeemError: state.redeem.error,
@@ -103,11 +107,36 @@ export default function(ownProps: any) {
     return <>loading bucket...</>;
   }
 
-  if (props.tokenSymbol === undefined || props.tokenDecimals === undefined) {
+  if (props.token === undefined) {
     return <>loading token info...</>;
   }
 
-  const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount!, props.tokenDecimals, 2);
+  const erc20Info = (token: TokenERC20) => {
+    const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount!, token.decimals, 2);
+    return <>
+      Token Symbol: {token.symbol}<br />
+      Token Decimals: {token.decimals}<br />
+      Display Amount: {displayAmount} <br />
+      Rounded Display Amount: {roundedDisplayAmount} <br />
+    </>
+  }
+
+  const nftInfo = (token: TokenNFT) => {
+    return <>
+      Token Symbol: {token.symbol}<br />
+      Token Metadata URI: {token.tokenURI}<br />
+      {props.loadingTokenMetadata ? "loading metadata..." : <>
+        {token.metadata !== undefined && <>
+          Name: {token.metadata.name}<br />
+          Description: {token.metadata.description}<br />
+          <img src={token.metadata.image} />
+        </>}
+      </>}<br />
+    </>
+  }
+
+  const isERC20 = isTokenERC20(props.token);
+  const tokenInfo = isERC20 ? erc20Info(props.token as TokenERC20) : nftInfo(props.token as TokenNFT);
 
   return <>
     Bucket Address: {props.bucketAddress}<br />
@@ -116,16 +145,14 @@ export default function(ownProps: any) {
     Expiration Time: {new Date(props.expirationTime! * 1000).toLocaleDateString("default", {hour: "numeric", minute: "numeric"})}<br />
     Code Hash: {props.codeHash} {emptyCode ? "(empty string)" : ""}<br />
     Token Address: {props.tokenAddress}<br />
-    Token Symbol: {props.tokenSymbol}<br />
-    Token Decimals: {props.tokenDecimals}<br />
-    Display Amount: {displayAmount} <br />
-    Rounded Display Amount: {roundedDisplayAmount} <br />
+    Token Type: {isERC20 ? "ERC20" : "NFT"}<br />
+    {tokenInfo}
     Receiver: {props.receiver} <br />
 
     <br /><br /><br />
     <button
       disabled={props.redeeming}
-      onClick={() => dispatch(redeem(bucketAddress, recipientAddress, ""))}>
+      onClick={() => dispatch(redeem(bucketAddress, recipientAddress, "", isERC20))}>
       {props.redeeming ? "Redeeming..." : "Redeem"}
     </button>
     <br />

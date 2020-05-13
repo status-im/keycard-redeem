@@ -31,8 +31,8 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "typescript": "^3.8.3",
-    "web3": "^1.2.6",
-    "web3-eth": "^1.2.6"
+    "web3": "1.2.7",
+    "web3-eth": "1.2.7"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -2,6 +2,7 @@ import { RootState } from '../reducers';
 import ERC20Bucket from '../embarkArtifacts/contracts/ERC20Bucket';
 import Bucket from '../embarkArtifacts/contracts/Bucket';
 import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
+import IERC721Metadata from '../embarkArtifacts/contracts/IERC721Metadata';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 
@@ -63,11 +64,44 @@ export interface BucketTokenLoadingAction {
   address: string
 }
 
+export interface TokenERC20 {
+  symbol: string
+  decimals: number
+}
+
+export interface TokenNFTMetadata {
+  name: string
+  description: string
+  image: string
+}
+
+export interface TokenNFT {
+  symbol: string
+  tokenURI: string
+  metadata: TokenNFTMetadata | undefined
+}
+
+export type Token = TokenERC20 | TokenNFT;
+
 export const BUCKET_TOKEN_LOADED = "BUCKET_TOKEN_LOADED";
 export interface BucketTokenLoadedAction {
   type: typeof BUCKET_TOKEN_LOADED
-  symbol: string
-  decimals: number
+  token: Token,
+}
+
+export const BUCKET_TOKEN_METADATA_LOADING = "BUCKET_TOKEN_METADATA_LOADING";
+export interface BucketTokenMetadataLoadingAction {
+  type: typeof BUCKET_TOKEN_METADATA_LOADING
+  tokenAddress: string
+  recipient: string
+}
+
+export const BUCKET_TOKEN_METADATA_LOADED = "BUCKET_TOKEN_METADATA_LOADED";
+export interface BucketTokenMetadataLoadedAction {
+  type: typeof BUCKET_TOKEN_METADATA_LOADED
+  tokenAddress: string
+  recipient: string
+  metadata: TokenNFTMetadata
 }
 
 export type BucketActions =
@@ -76,7 +110,9 @@ export type BucketActions =
   BucketRedeemableLoadedAction |
   BucketRedeemableNotFoundAction |
   BucketTokenLoadingAction |
-  BucketTokenLoadedAction;
+  BucketTokenLoadedAction |
+  BucketTokenMetadataLoadingAction |
+  BucketTokenMetadataLoadedAction;
 
 export const loadingRedeemable = (address: string, recipient: string): BucketRedeemableLoadingAction => ({
   type: BUCKET_REDEEMABLE_LOADING,
@@ -107,10 +143,22 @@ export const loadingToken = (address: string): BucketTokenLoadingAction => ({
   address,
 });
 
-export const tokenLoaded = (symbol: string, decimals: number): BucketTokenLoadedAction => ({
+export const tokenLoaded = (token: Token): BucketTokenLoadedAction => ({
   type: BUCKET_TOKEN_LOADED,
-  symbol,
-  decimals,
+  token,
+});
+
+export const loadingTokenMetadata = (tokenAddress: string, recipient: string): BucketTokenMetadataLoadingAction => ({
+  type: BUCKET_TOKEN_METADATA_LOADING,
+  tokenAddress,
+  recipient,
+});
+
+export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, metadata: TokenNFTMetadata): BucketTokenMetadataLoadedAction => ({
+  type: BUCKET_TOKEN_METADATA_LOADED,
+  tokenAddress,
+  recipient,
+  metadata,
 });
 
 export const newBucketContract = (address: string) => {
@@ -132,14 +180,13 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
     bucket.methods.expirationTime().call().then((expirationTime: number) => {
       bucket.methods.redeemables(recipientAddress).call().then((result: any) => {
         const { recipient, data, code } = result;
-        const amount = data;
-        if (amount === "0") {
+        if (data === "0") {
           dispatch(redeemableNotFound())
           return;
         }
 
-        dispatch(redeemableLoaded(expirationTime, recipient, amount, code));
-        dispatch<any>(loadToken(bucket))
+        dispatch(redeemableLoaded(expirationTime, recipient, data, code));
+        dispatch<any>(loadToken(bucket, data, recipient))
       }).catch((err: string) => {
         dispatch(errorLoadingRedeemable(err))
         console.error("err: ", err)
@@ -152,15 +199,15 @@ export const loadRedeemable = (bucketAddress: string, recipientAddress: string) 
 };
 
 //FIXME: set the proper Contract type
-export const loadToken = (bucket: any) => {
+export const loadToken = (bucket: any, data: string, recipient: string) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.bucketType().call().then((type: string) => {
       switch (type) {
         case "20":
-          dispatch<any>(loadERC20Token(bucket));
+          dispatch<any>(loadERC20Token(bucket, data, recipient));
           break;
         case "721":
-          dispatch<any>(loadERC20Token(bucket));
+          dispatch<any>(loadNFTToken(bucket, data, recipient));
           break;
         default:
           //FIXME: manage error
@@ -173,7 +220,8 @@ export const loadToken = (bucket: any) => {
   }
 };
 
-export const loadERC20Token = (bucket: any) => {
+//FIXME: fix type any
+export const loadERC20Token = (bucket: any, data: string, recipient: string) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.tokenAddress().call().then(async (address: string) => {
       const erc20Abi = IERC20Detailed.options.jsonInterface;
@@ -181,8 +229,40 @@ export const loadERC20Token = (bucket: any) => {
       dispatch(loadingToken(address));
 
       const symbol = await erc20.methods.symbol().call();
-      const decimals = await erc20.methods.decimals().call();
-      dispatch(tokenLoaded(symbol, decimals));
+      const decimals = parseInt(await erc20.methods.decimals().call());
+      dispatch(tokenLoaded({symbol, decimals}));
+    }).catch((err: string) => {
+      //FIXME: manage error
+      console.error("ERROR: ", err);
+    })
+  }
+}
+
+export const loadNFTToken = (bucket: any, data: string, recipient: string) => {
+  return (dispatch: Dispatch, getState: () => RootState) => {
+    bucket.methods.tokenAddress().call().then(async (address: string) => {
+      const nftAbi = IERC721Metadata.options.jsonInterface;
+      const nft = new config.web3!.eth.Contract(nftAbi, address);
+      dispatch(loadingToken(address));
+
+      const symbol = await nft.methods.symbol().call();
+      const tokenURI = await nft.methods.tokenURI(data).call();
+      dispatch(tokenLoaded({symbol, tokenURI, metadata: undefined}));
+      dispatch(loadingTokenMetadata(address, recipient))
+
+      fetch(tokenURI)
+        .then(response => response.json())
+        .then(data => {
+          dispatch(tokenMetadataLoaded(address, recipient, {
+            name: data.name,
+            description: data.description,
+            image: data.image,
+          }));
+        })
+        .catch((err: string) => {
+          //FIXME: manage error
+          console.error("ERROR: ", err);
+        });
     }).catch((err: string) => {
       //FIXME: manage error
       console.error("ERROR: ", err);
