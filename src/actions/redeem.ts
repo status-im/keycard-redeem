@@ -1,7 +1,7 @@
 import { RootState } from '../reducers';
 import { config } from "../config";
 import { Dispatch } from 'redux';
-import { newBucketContract } from "./bucket";
+import { newBucketContract } from "./redeemable";
 import { sha3 } from "web3-utils";
 import { recoverTypedSignature } from 'eth-sig-util';
 import { Web3Type } from "../actions/web3";
@@ -117,7 +117,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
     const domainName = isERC20 ? "KeycardERC20Bucket" : "KeycardNFTBucket";
     //FIXME: is signer needed?
     signRedeem(web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, address }: SignRedeemResponse) => {
-      const recipient = state.bucket.recipient!;
+      const recipient = state.redeemable.recipient!;
       if (address.toLowerCase() !== recipient.toLowerCase()) {
         //FIXME: handle error
         dispatch(wrongSigner(recipient, address));

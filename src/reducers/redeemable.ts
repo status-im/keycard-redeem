@@ -1,31 +1,31 @@
 import {
   Token,
-  BucketActions,
-  BucketErrors,
-  BUCKET_REDEEMABLE_LOADING,
-  BUCKET_REDEEMABLE_LOADING_ERROR,
-  BUCKET_REDEEMABLE_NOT_FOUND,
-  BUCKET_REDEEMABLE_LOADED,
-  BUCKET_TOKEN_LOADING,
-  BUCKET_TOKEN_LOADED,
-  BUCKET_TOKEN_METADATA_LOADING,
-  BUCKET_TOKEN_METADATA_LOADED,
-} from "../actions/bucket";
+  RedeemableActions,
+  RedeemableErrors,
+  REDEEMABLE_LOADING,
+  REDEEMABLE_LOADING_ERROR,
+  REDEEMABLE_NOT_FOUND,
+  REDEEMABLE_LOADED,
+  TOKEN_LOADING,
+  TOKEN_LOADED,
+  TOKEN_METADATA_LOADING,
+  TOKEN_METADATA_LOADED,
+} from "../actions/redeemable";
 
-export interface BucketState {
+export interface RedeemableState {
   loading: boolean
   address: string | undefined
   expirationTime: number | undefined
   tokenAddress: string | undefined
   token: Token | undefined
   loadingTokenMetadata: boolean
-  error: BucketErrors | undefined
+  error: RedeemableErrors | undefined
   recipient: string | undefined
   amount: string | undefined
   codeHash: string | undefined
 }
 
-const initialState: BucketState = {
+const initialState: RedeemableState = {
   loading: false,
   address: undefined,
   expirationTime: undefined,
@@ -38,9 +38,9 @@ const initialState: BucketState = {
   codeHash: undefined,
 }
 
-export const bucketReducer = (state: BucketState = initialState, action: BucketActions): BucketState => {
+export const redeemableReducer = (state: RedeemableState = initialState, action: RedeemableActions): RedeemableState => {
   switch (action.type) {
-    case BUCKET_REDEEMABLE_LOADING: {
+    case REDEEMABLE_LOADING: {
       return {
         ...initialState,
         loading: true,
@@ -49,7 +49,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_REDEEMABLE_LOADING_ERROR: {
+    case REDEEMABLE_LOADING_ERROR: {
       return {
         ...initialState,
         loading: false,
@@ -57,7 +57,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_REDEEMABLE_NOT_FOUND: {
+    case REDEEMABLE_NOT_FOUND: {
       return {
         ...state,
         loading: false,
@@ -65,7 +65,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_REDEEMABLE_LOADED: {
+    case REDEEMABLE_LOADED: {
       return {
         ...state,
         loading: false,
@@ -76,21 +76,21 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_TOKEN_LOADING: {
+    case TOKEN_LOADING: {
       return {
         ...state,
         tokenAddress: action.address,
       }
     }
 
-    case BUCKET_TOKEN_LOADED: {
+    case TOKEN_LOADED: {
       return {
         ...state,
         token: action.token,
       }
     }
 
-    case BUCKET_TOKEN_METADATA_LOADING: {
+    case TOKEN_METADATA_LOADING: {
       if (action.tokenAddress !== state.tokenAddress || action.recipient !== state.recipient) {
         // bucket or recipient changed before starting loading
         return state;
@@ -102,7 +102,7 @@ export const bucketReducer = (state: BucketState = initialState, action: BucketA
       }
     }
 
-    case BUCKET_TOKEN_METADATA_LOADED: {
+    case TOKEN_METADATA_LOADED: {
       if (action.tokenAddress !== state.tokenAddress || action.recipient !== state.recipient) {
         // bucket or recipient changed after starting loading
         return state;

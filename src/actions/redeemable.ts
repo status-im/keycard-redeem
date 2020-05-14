@@ -18,7 +18,7 @@ export interface ErrLoadingRedeemable {
   message: string
 }
 
-export type BucketErrors =
+export type RedeemableErrors =
   ErrRedeemableNotFound |
   ErrLoadingRedeemable;
 
@@ -31,37 +31,37 @@ const errLoadingRedeemable = (message: string): ErrLoadingRedeemable => ({
   message,
 });
 
-export const BUCKET_REDEEMABLE_LOADING = "BUCKET_REDEEMABLE_LOADING";
-export interface BucketRedeemableLoadingAction {
-  type: typeof BUCKET_REDEEMABLE_LOADING
+export const REDEEMABLE_LOADING = "REDEEMABLE_LOADING";
+export interface RedeemableLoadingAction {
+  type: typeof REDEEMABLE_LOADING
   address: string
   recipient: string
 }
 
-export const BUCKET_REDEEMABLE_LOADING_ERROR = "BUCKET_REDEEMABLE_LOADING_ERROR";
-export interface BucketRedeemableLoadingErrorAction {
-  type: typeof BUCKET_REDEEMABLE_LOADING_ERROR
+export const REDEEMABLE_LOADING_ERROR = "REDEEMABLE_LOADING_ERROR";
+export interface RedeemableLoadingErrorAction {
+  type: typeof REDEEMABLE_LOADING_ERROR
   error: ErrLoadingRedeemable
 }
 
-export const BUCKET_REDEEMABLE_LOADED = "BUCKET_REDEEMABLE_LOADED";
-export interface BucketRedeemableLoadedAction {
-  type: typeof BUCKET_REDEEMABLE_LOADED
+export const REDEEMABLE_LOADED = "REDEEMABLE_LOADED";
+export interface RedeemableLoadedAction {
+  type: typeof REDEEMABLE_LOADED
   expirationTime: number
   recipient: string
   amount: string
   codeHash: string
 }
 
-export const BUCKET_REDEEMABLE_NOT_FOUND = "BUCKET_REDEEMABLE_NOT_FOUND";
-export interface BucketRedeemableNotFoundAction {
-  type: typeof BUCKET_REDEEMABLE_NOT_FOUND
+export const REDEEMABLE_NOT_FOUND = "REDEEMABLE_NOT_FOUND";
+export interface RedeemableNotFoundAction {
+  type: typeof REDEEMABLE_NOT_FOUND
   error: ErrRedeemableNotFound
 }
 
-export const BUCKET_TOKEN_LOADING = "BUCKET_TOKEN_LOADING";
-export interface BucketTokenLoadingAction {
-  type: typeof BUCKET_TOKEN_LOADING
+export const TOKEN_LOADING = "TOKEN_LOADING";
+export interface TokenLoadingAction {
+  type: typeof TOKEN_LOADING
   address: string
 }
 
@@ -84,79 +84,79 @@ export interface TokenNFT {
 
 export type Token = TokenERC20 | TokenNFT;
 
-export const BUCKET_TOKEN_LOADED = "BUCKET_TOKEN_LOADED";
-export interface BucketTokenLoadedAction {
-  type: typeof BUCKET_TOKEN_LOADED
+export const TOKEN_LOADED = "TOKEN_LOADED";
+export interface TokenLoadedAction {
+  type: typeof TOKEN_LOADED
   token: Token,
 }
 
-export const BUCKET_TOKEN_METADATA_LOADING = "BUCKET_TOKEN_METADATA_LOADING";
-export interface BucketTokenMetadataLoadingAction {
-  type: typeof BUCKET_TOKEN_METADATA_LOADING
+export const TOKEN_METADATA_LOADING = "TOKEN_METADATA_LOADING";
+export interface TokenMetadataLoadingAction {
+  type: typeof TOKEN_METADATA_LOADING
   tokenAddress: string
   recipient: string
 }
 
-export const BUCKET_TOKEN_METADATA_LOADED = "BUCKET_TOKEN_METADATA_LOADED";
-export interface BucketTokenMetadataLoadedAction {
-  type: typeof BUCKET_TOKEN_METADATA_LOADED
+export const TOKEN_METADATA_LOADED = "TOKEN_METADATA_LOADED";
+export interface TokenMetadataLoadedAction {
+  type: typeof TOKEN_METADATA_LOADED
   tokenAddress: string
   recipient: string
   metadata: TokenNFTMetadata
 }
 
-export type BucketActions =
-  BucketRedeemableLoadingAction |
-  BucketRedeemableLoadingErrorAction |
-  BucketRedeemableLoadedAction |
-  BucketRedeemableNotFoundAction |
-  BucketTokenLoadingAction |
-  BucketTokenLoadedAction |
-  BucketTokenMetadataLoadingAction |
-  BucketTokenMetadataLoadedAction;
+export type RedeemableActions =
+  RedeemableLoadingAction |
+  RedeemableLoadingErrorAction |
+  RedeemableLoadedAction |
+  RedeemableNotFoundAction |
+  TokenLoadingAction |
+  TokenLoadedAction |
+  TokenMetadataLoadingAction |
+  TokenMetadataLoadedAction;
 
-export const loadingRedeemable = (address: string, recipient: string): BucketRedeemableLoadingAction => ({
-  type: BUCKET_REDEEMABLE_LOADING,
+export const loadingRedeemable = (address: string, recipient: string): RedeemableLoadingAction => ({
+  type: REDEEMABLE_LOADING,
   address,
   recipient,
 });
 
-export const redeemableLoaded = (expirationTime: number, recipient: string, amount: string, codeHash: string): BucketRedeemableLoadedAction => ({
-  type: BUCKET_REDEEMABLE_LOADED,
+export const redeemableLoaded = (expirationTime: number, recipient: string, amount: string, codeHash: string): RedeemableLoadedAction => ({
+  type: REDEEMABLE_LOADED,
   expirationTime,
   recipient,
   amount,
   codeHash,
 });
 
-export const redeemableNotFound = (): BucketRedeemableNotFoundAction => ({
-  type: BUCKET_REDEEMABLE_NOT_FOUND,
+export const redeemableNotFound = (): RedeemableNotFoundAction => ({
+  type: REDEEMABLE_NOT_FOUND,
   error: errRedeemableNotFound(),
 });
 
-export const errorLoadingRedeemable = (errorMessage: string): BucketRedeemableLoadingErrorAction => ({
-  type: BUCKET_REDEEMABLE_LOADING_ERROR,
+export const errorLoadingRedeemable = (errorMessage: string): RedeemableLoadingErrorAction => ({
+  type: REDEEMABLE_LOADING_ERROR,
   error: errLoadingRedeemable(errorMessage),
 });
 
-export const loadingToken = (address: string): BucketTokenLoadingAction => ({
-  type: BUCKET_TOKEN_LOADING,
+export const loadingToken = (address: string): TokenLoadingAction => ({
+  type: TOKEN_LOADING,
   address,
 });
 
-export const tokenLoaded = (token: Token): BucketTokenLoadedAction => ({
-  type: BUCKET_TOKEN_LOADED,
+export const tokenLoaded = (token: Token): TokenLoadedAction => ({
+  type: TOKEN_LOADED,
   token,
 });
 
-export const loadingTokenMetadata = (tokenAddress: string, recipient: string): BucketTokenMetadataLoadingAction => ({
-  type: BUCKET_TOKEN_METADATA_LOADING,
+export const loadingTokenMetadata = (tokenAddress: string, recipient: string): TokenMetadataLoadingAction => ({
+  type: TOKEN_METADATA_LOADING,
   tokenAddress,
   recipient,
 });
 
-export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, metadata: TokenNFTMetadata): BucketTokenMetadataLoadedAction => ({
-  type: BUCKET_TOKEN_METADATA_LOADED,
+export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, metadata: TokenNFTMetadata): TokenMetadataLoadedAction => ({
+  type: TOKEN_METADATA_LOADED,
   tokenAddress,
   recipient,
   metadata,

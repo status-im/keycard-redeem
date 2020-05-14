@@ -3,7 +3,7 @@ import BN from "bn.js";
 import {
   Token,
   TokenERC20,
-} from "./actions/bucket";
+} from "./actions/redeemable";
 
 // keccak256("")
 export const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";

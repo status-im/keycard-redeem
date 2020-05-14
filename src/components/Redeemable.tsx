@@ -6,15 +6,15 @@ import {
   useSelector,
   useDispatch,
 } from 'react-redux';
-import { redeemPath } from '../config';
+import { redeemablePath } from '../config';
 import {
   TokenERC20,
   TokenNFT,
   loadRedeemable,
-  BucketErrors,
+  RedeemableErrors,
   ERROR_LOADING_REDEEMABLE,
   ERROR_REDEEMABLE_NOT_FOUND,
-} from '../actions/bucket';
+} from '../actions/redeemable';
 import {
   toBaseUnit,
   KECCAK_EMPTY_STRING2,
@@ -27,7 +27,7 @@ import {
   ERROR_WRONG_SIGNER,
 } from '../actions/redeem';
 
-const buckerErrorMessage = (error: BucketErrors): string => {
+const buckerErrorMessage = (error: RedeemableErrors): string => {
   switch (error.type) {
     case ERROR_LOADING_REDEEMABLE:
       return "couldn't load redeemable";
@@ -62,7 +62,7 @@ export default function(ownProps: any) {
   const dispatch = useDispatch()
 
   const match = useRouteMatch<URLParams>({
-    path: redeemPath,
+    path: redeemablePath,
     exact: true,
   });
 
@@ -75,16 +75,16 @@ export default function(ownProps: any) {
 
   const props = useSelector((state: RootState) => {
     return {
-      bucketAddress: state.bucket.address,
-      loading: state.bucket.loading,
-      expirationTime: state.bucket.expirationTime,
-      error: state.bucket.error,
-      recipient: state.bucket.recipient,
-      amount: state.bucket.amount,
-      codeHash: state.bucket.codeHash,
-      tokenAddress: state.bucket.tokenAddress,
-      token: state.bucket.token,
-      loadingTokenMetadata: state.bucket.loadingTokenMetadata,
+      bucketAddress: state.redeemable.address,
+      loading: state.redeemable.loading,
+      expirationTime: state.redeemable.expirationTime,
+      error: state.redeemable.error,
+      recipient: state.redeemable.recipient,
+      amount: state.redeemable.amount,
+      codeHash: state.redeemable.codeHash,
+      tokenAddress: state.redeemable.tokenAddress,
+      token: state.redeemable.token,
+      loadingTokenMetadata: state.redeemable.loadingTokenMetadata,
       receiver: state.web3.account,
       redeeming: state.redeem.loading,
       redeemError: state.redeem.error,

@@ -6,9 +6,9 @@ import {
   REDEEM_DONE,
 } from "../actions/redeem";
 import {
-  BucketRedeemableLoadingAction,
-  BUCKET_REDEEMABLE_LOADING
-} from "../actions/bucket";
+  RedeemableLoadingAction,
+  REDEEMABLE_LOADING
+} from "../actions/redeemable";
 
 export interface RedeemState {
   loading: boolean
@@ -24,9 +24,9 @@ const initialState: RedeemState = {
   receiver: undefined,
 }
 
-export const redeemReducer = (state: RedeemState = initialState, action: RedeemActions | BucketRedeemableLoadingAction): RedeemState => {
+export const redeemReducer = (state: RedeemState = initialState, action: RedeemActions | RedeemableLoadingAction): RedeemState => {
   switch (action.type) {
-    case BUCKET_REDEEMABLE_LOADING: {
+    case REDEEMABLE_LOADING: {
       return initialState;
     }
 

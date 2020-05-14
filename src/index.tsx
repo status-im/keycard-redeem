@@ -11,8 +11,8 @@ import { createHashHistory } from 'history';
 import ErrorBoundary from './components/ErrorBoundary';
 import App from './components/App';
 import Home from './components/Home';
-import Redeem from './components/Redeem';
-import { redeemPath } from './config';
+import Redeemable from './components/Redeemable';
+import { redeemablePath } from './config';
 
 const logger: Middleware = ({ getState }: MiddlewareAPI) => (next: Dispatch) => action => {
   console.log('will dispatch', action);
@@ -49,7 +49,7 @@ ReactDOM.render(
         <ConnectedRouter history={history}>
           <Switch>
             <Route exact path="/"><Home /></Route>
-            <Route exact path={redeemPath}><Redeem /></Route>
+            <Route exact path={redeemablePath}><Redeemable /></Route>
             <Route render={() => "page not found"} />
           </Switch>
         </ConnectedRouter>

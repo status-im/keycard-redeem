@@ -6,9 +6,9 @@ import {
   web3Reducer,
 } from './web3';
 import {
-  BucketState,
-  bucketReducer,
-} from './bucket';
+  RedeemableState,
+  redeemableReducer,
+} from './redeemable';
 import {
   RedeemState,
   redeemReducer,
@@ -16,7 +16,7 @@ import {
 
 export interface RootState {
   web3: Web3State,
-  bucket: BucketState,
+  redeemable: RedeemableState,
   redeem: RedeemState,
 }
 
@@ -24,7 +24,7 @@ export default function(history: History) {
   return combineReducers({
     web3: web3Reducer,
     router: connectRouter(history),
-    bucket: bucketReducer,
+    redeemable: redeemableReducer,
     redeem: redeemReducer,
   });
 }

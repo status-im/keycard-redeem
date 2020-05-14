@@ -8,4 +8,4 @@ export const config: Config = {
   web3: undefined
 };
 
-export const redeemPath = "/redeem/:bucketAddress/:recipientAddress";
+export const redeemablePath = "/buckets/:bucketAddress/redeemables/:recipientAddress";
