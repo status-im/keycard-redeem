@@ -5,7 +5,7 @@ const Account = require('./account.js');
 const utils = require('./utils.js');
 const fs = require('fs');
 
-const argv = parseArgs(process.argv.slice(2), {string: ["sender"], default: {"endpoint": "ws://127.0.0.1:8546"}});
+const argv = parseArgs(process.argv.slice(2), {string: ["sender", "bucket"], default: {"endpoint": "ws://127.0.0.1:8546"}});
 const web3 =  new Web3(argv["endpoint"]);
 const account = new Account(web3);
 
@@ -72,6 +72,14 @@ async function redeemRequest(req, res) {
   }
 }
 
+function bucketRequest(req, res) {
+  if (validateBucket(req.params.address)) {
+    res.status(200).json({"allowed": true});
+  } else {
+    res.status(404).json({"allowed": false});
+  }
+}
+
 function loadBucketList(path) {
   let file = fs.readFileSync(path, 'utf8');
   allowedBuckets = file.split("\n").map((line) => line.toLowerCase().trim());
@@ -109,6 +117,7 @@ async function run() {
 
   app.use(express.json());
   app.post('/redeem', redeemRequest);
+  app.get('/bucket/:address', bucketRequest);
   app.listen(port, () => console.log(`Relayer listening at http://localhost:${port}`));
 }
 
