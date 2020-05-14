@@ -9,7 +9,7 @@ module.exports = class Account {
   async init(argv) {
     if (argv["account"]) {
       if (!argv["passfile"]) {
-        console.error("the ---passfile option must be specified when using the --account option");
+        console.error("the --passfile option must be specified when using the --account option");
         process.exit(1);
       }
 
