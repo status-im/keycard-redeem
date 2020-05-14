@@ -14,23 +14,22 @@ const BucketConfig = utils.loadJSON(`./dist/contracts/Bucket.json`);
 const app = express();
 const port = 3000;
 
-async function redeem(bucket, blockNumber, blockHash, receiver, code, sig) {
+async function redeem(message, sig) {
   const Bucket = utils.json2Contract(web3, BucketConfig);
   Bucket.transactionConfirmationBlocks = 1;
   Bucket.options.address = bucket;
-  let methodCall = Bucket.methods.redeem({blockNumber: blockNumber, blockHash: blockHash, receiver: receiver, code: code}, sig);
+  let methodCall = Bucket.methods.redeem(message, sig);
   return account.sendMethod(methodCall, Bucket.options.address);
 }
 
 async function redeemRequest(req, res) {
-  let receipt = redeem(req.body.bucket, req.body.blockNumber, req.body.blockHash, req.body.receiver, req.body.code, req.body.sig);
+  let receipt = redeem(req.body.bucket, req.body.message, req.body.sig);
   res.json({tx: receipt.transactionHash});
 }
 
 async function run() {
   await account.init(argv);
   app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
   app.post('/redeem', redeemRequest);
   app.listen(port, () => console.log(`Relayer listening at http://localhost:${port}`));
 }
