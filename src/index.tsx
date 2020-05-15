@@ -9,7 +9,7 @@ import { routerMiddleware, ConnectedRouter } from 'connected-react-router';
 import { Route, Switch } from 'react-router';
 import { createHashHistory } from 'history';
 import ErrorBoundary from './components/ErrorBoundary';
-import App from './components/App';
+import Layout from './components/Layout';
 import Home from './components/Home';
 import Redeemable from './components/Redeemable';
 import { redeemablePath } from './config';
@@ -45,7 +45,7 @@ store.dispatch<any>(initializeWeb3());
 ReactDOM.render(
   <ErrorBoundary>
     <Provider store={store}>
-      <App>
+      <Layout>
         <ConnectedRouter history={history}>
           <Switch>
             <Route exact path="/"><Home /></Route>
@@ -53,7 +53,7 @@ ReactDOM.render(
             <Route render={() => "page not found"} />
           </Switch>
         </ConnectedRouter>
-      </App>
+      </Layout>
     </Provider>
   </ErrorBoundary>,
   document.getElementById("root")
