@@ -65,4 +65,18 @@ body {
 
 .main {
   margin-top: 50px;
+
+  .paper {
+    margin: 0 auto;
+    padding: 12px;
+    background: #fff;
+    color: #1a1a1a;
+    width: 400px;
+    border-radius: 4px;
+    text-align: center;
+
+    &.error {
+      color: red;
+    }
+  }
 }

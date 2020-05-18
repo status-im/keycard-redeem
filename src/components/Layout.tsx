@@ -34,14 +34,6 @@ export default function(ownProps: any) {
     }
   }, shallowEqual);
 
-  if (props.error) {
-    return <>Error: {props.error}</>;
-  }
-
-  if (!props.initialized) {
-    return <>initializing...</>;
-  }
-
   const sidebarClass = classNames({
     sidebar: true,
     open: props.sidebarOpen,
@@ -56,8 +48,17 @@ export default function(ownProps: any) {
         Web3 Type: {web3Type(props.type)} <br />
       </div>
     </div>
-    <div className="content">
+
+    {props.error && <div className={classNames({ paper: true, error: true })}>
+      {props.error}
+    </div>}
+
+    {!props.initialized && <div className={classNames({ paper: true })}>
+      initializing...
+    </div>}
+
+    {!props.error && props.initialized && <div className="content">
       {ownProps.children}
-    </div>
+    </div>}
   </div>;
 }

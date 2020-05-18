@@ -109,15 +109,21 @@ export default function(ownProps: any) {
   }, [dispatch, bucketAddress, recipientAddress]);
 
   if (props.error) {
-    return <>Error: {buckerErrorMessage(props.error)}</>;
+    return <div className={classNames({ paper: true, error: true })}>
+      {buckerErrorMessage(props.error)}
+    </div>;
   }
 
   if (props.loading) {
-    return <>loading bucket...</>;
+    return <div className={classNames({ paper: true })}>
+      loading bucket...
+    </div>;
   }
 
   if (props.token === undefined) {
-    return <>loading token info...</>;
+    return <div className={classNames({ paper: true })}>
+      loading token info...
+    </div>;
   }
 
   const erc20Header = (token: TokenERC20) => {
