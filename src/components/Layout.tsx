@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import ERC20BucketFactory from '../embarkArtifacts/contracts/ERC20BucketFactory';
 import { RootState } from '../reducers';
 import {
@@ -6,6 +7,7 @@ import {
   useSelector,
 } from 'react-redux';
 import { Web3Type } from "../actions/web3";
+import "../styles/Layout.scss";
 
 const web3Type = (t: Web3Type) => {
   switch (t) {
@@ -28,6 +30,7 @@ export default function(ownProps: any) {
       error: state.web3.error,
       account: state.web3.account,
       type: state.web3.type,
+      sidebarOpen: state.layout.sidebarOpen,
     }
   }, shallowEqual);
 
@@ -39,14 +42,22 @@ export default function(ownProps: any) {
     return <>initializing...</>;
   }
 
-  return <>
-    Network ID: {props.networkID} <br />
-    Factory: {ERC20BucketFactory.address} <br />
-    Account: {props.account} <br />
-    Web3 Type: {web3Type(props.type)} <br />
-    <hr />
-    <div>
+  const sidebarClass = classNames({
+    sidebar: true,
+    open: props.sidebarOpen,
+  });
+
+  return <div className="main">
+    <div className={sidebarClass}>
+      <div className="inner">
+        Network ID: {props.networkID} <br />
+        Factory: {ERC20BucketFactory.address} <br />
+        Account: {props.account} <br />
+        Web3 Type: {web3Type(props.type)} <br />
+      </div>
+    </div>
+    <div className="content">
       {ownProps.children}
     </div>
-  </>;
+  </div>;
 }

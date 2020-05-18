@@ -13,11 +13,16 @@ import {
   RedeemState,
   redeemReducer,
 } from './redeem';
+import {
+  LayoutState,
+  layoutReducer,
+} from './layout';
 
 export interface RootState {
   web3: Web3State,
   redeemable: RedeemableState,
   redeem: RedeemState,
+  layout: LayoutState,
 }
 
 export default function(history: History) {
@@ -26,5 +31,6 @@ export default function(history: History) {
     router: connectRouter(history),
     redeemable: redeemableReducer,
     redeem: redeemReducer,
+    layout: layoutReducer,
   });
 }

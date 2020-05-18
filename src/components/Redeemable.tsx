@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import classNames from 'classnames';
 import { RootState } from '../reducers';
 import { useRouteMatch } from 'react-router-dom';
 import {
@@ -26,6 +27,14 @@ import {
   ERROR_REDEEMING,
   ERROR_WRONG_SIGNER,
 } from '../actions/redeem';
+import { flipCard } from "../actions/layout";
+import "../styles/Redeemable.scss";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faUndo as flipIcon,
+  faUndo as unflipIcon,
+} from '@fortawesome/free-solid-svg-icons'
+
 
 const buckerErrorMessage = (error: RedeemableErrors): string => {
   switch (error.type) {
@@ -89,6 +98,7 @@ export default function(ownProps: any) {
       redeeming: state.redeem.loading,
       redeemError: state.redeem.error,
       redeemTxHash: state.redeem.txHash,
+      cardFlipped: state.layout.cardFlipped,
     }
   }, shallowEqual);
 
@@ -110,53 +120,120 @@ export default function(ownProps: any) {
     return <>loading token info...</>;
   }
 
-  const erc20Info = (token: TokenERC20) => {
+  const erc20Header = (token: TokenERC20) => {
     const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount!, token.decimals, 2);
     return <>
-      Token Symbol: {token.symbol}<br />
-      Token Decimals: {token.decimals}<br />
-      Display Amount: {displayAmount} <br />
-      Rounded Display Amount: {roundedDisplayAmount} <br />
+      <span className="amount">{roundedDisplayAmount}</span>
+      <span className="erc20-symbol">{token.symbol}</span>
     </>
   }
 
-  const nftInfo = (token: TokenNFT) => {
+  const nftHeader = (token: TokenNFT) => {
     return <>
-      Token Symbol: {token.symbol}<br />
-      Token Metadata URI: {token.tokenURI}<br />
+      <span className="nft-symbol">{token.symbol}</span>
+      {token.metadata !== undefined && <span className="name">
+        {token.metadata.name}
+      </span>}
+    </>
+  }
+
+  const erc20Content = (token: TokenERC20) => {
+    return <>
+    </>
+  }
+
+  const nftContent = (token: TokenNFT) => {
+    return <>
       {props.loadingTokenMetadata ? "loading metadata..." : <>
         {token.metadata !== undefined && <>
-          Name: {token.metadata.name}<br />
-          Description: {token.metadata.description}<br />
-          <img src={token.metadata.image} alt={token.metadata.name} />
+          <span className="nft-description">
+            {token.metadata.description}
+          </span>
+          <img className="nft-image" src={token.metadata.image} alt={token.metadata.name} />
         </>}
-      </>}<br />
+      </>}
     </>
   }
 
   const isERC20 = isTokenERC20(props.token);
-  const tokenInfo = isERC20 ? erc20Info(props.token as TokenERC20) : nftInfo(props.token as TokenNFT);
+  const tokenHeader = isERC20 ? erc20Header(props.token as TokenERC20) : nftHeader(props.token as TokenNFT);
+  const tokenContent = isERC20 ? erc20Content(props.token as TokenERC20) : nftContent(props.token as TokenNFT);
 
-  return <>
-    Bucket Address: {props.bucketAddress}<br />
-    Recipient: {props.recipient}<br />
-    Amount: {props.amount}<br />
-    Expiration Time: {new Date(props.expirationTime! * 1000).toLocaleDateString("default", {hour: "numeric", minute: "numeric"})}<br />
-    Code Hash: {props.codeHash} {emptyCode ? "(empty string)" : ""}<br />
-    Token Address: {props.tokenAddress}<br />
-    Token Type: {isERC20 ? "ERC20" : "NFT"}<br />
-    {tokenInfo}
-    Receiver: {props.receiver} <br />
+  const cardClass = classNames({
+    card: true,
+    flipped: props.cardFlipped,
+  });
 
-    <br /><br /><br />
-    <button
-      disabled={props.redeeming}
-      onClick={() => dispatch(redeem(bucketAddress, recipientAddress, "", isERC20))}>
-      {props.redeeming ? "Redeeming..." : "Redeem"}
-    </button>
-    <br />
-    {props.redeemError && `Error: ${redeemErrorMessage(props.redeemError)}`}
+  const frontClass = classNames({
+    side: true,
+    front: true,
+    erc20: isERC20,
+    nft: !isERC20,
+  });
 
-    {props.redeemTxHash && `Done! Tx Hash: ${props.redeemTxHash}`}
-  </>;
+  const backClass = classNames({ side: true, back: true });
+
+  return <div className={cardClass}>
+      <div className={frontClass}>
+        <div className="header">
+          <button className="flip" onClick={ () => { dispatch(flipCard(true)) } }>
+            <FontAwesomeIcon icon={flipIcon} />
+          </button>
+
+          <div className="info">
+            {tokenHeader}
+          </div>
+        </div>
+        <div className="content">
+          <div className="info">
+            {tokenContent}
+          </div>
+          {props.redeemError && <div className="error">
+            Error: {redeemErrorMessage(props.redeemError)}
+          </div>}
+          {props.redeemTxHash && <div className="success">
+            Done! Tx Hash: {props.redeemTxHash}
+          </div>}
+        </div>
+        <div className="footer">
+          <button
+            className="btn-redeem"
+            disabled={props.redeeming}
+            onClick={() => dispatch(redeem(bucketAddress, recipientAddress, "", isERC20))}>
+            {props.redeeming ? "Redeeming..." : "Redeem"}
+          </button>
+        </div>
+      </div>
+
+      <div className={backClass}>
+        <div className="header">
+          <button className="flip" onClick={ () => { dispatch(flipCard(false)) } }>
+            <FontAwesomeIcon icon={flipIcon} />
+          </button>
+        </div>
+        <div className="content">
+          <dl>
+            <dt>Bucket Address</dt>
+            <dd>{props.bucketAddress}</dd>
+            <dt>Bucket Address</dt>
+            <dd>{props.bucketAddress}</dd>
+            <dt>Recipient</dt>
+            <dd>{props.recipient}</dd>
+            <dt>Amount</dt>
+            <dd>{props.amount}</dd>
+            <dt>Expiration Time</dt>
+            <dd>{new Date(props.expirationTime! * 1000).toLocaleDateString("default", {hour: "numeric", minute: "numeric"})}</dd>
+            <dt>Code Hash</dt>
+            <dd>{props.codeHash} {emptyCode ? "(empty string)" : ""}</dd>
+            <dt>Token Address</dt>
+            <dd>{props.tokenAddress}</dd>
+            <dt>Token Type: {isERC20 ? "ERC20" : "NFT"}</dt>
+            <dt>Receiver</dt>
+            <dd>{props.receiver} </dd>
+          </dl>
+        </div>
+        <div className="footer">
+        </div>
+      </div>
+  </div>;
 }

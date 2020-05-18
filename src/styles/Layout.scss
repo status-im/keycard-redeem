@@ -1,0 +1,68 @@
+:link,:visited { text-decoration:none }
+ul,ol { list-style:none }
+h1,h2,h3,h4,h5,h6,pre,code { font-size:1em; }
+ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,body,html,p,blockquote,fieldset,input
+{ margin:0; padding:0 }
+a img,:link img,:visited img { border:none }
+address { font-style:normal }
+
+body {
+  background-image: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: 0.01071em;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+.sidebar {
+  z-index: 9999;
+  background: #fff;
+  position: absolute;
+  top: 0;
+  left: -100vw;
+  min-height: 100vh;
+  width: 100vw;
+
+  &.open {
+    animation-duration: 0.2s;
+    animation-name: slidein;
+    left: 0;
+  }
+
+  &.closed {
+    animation-duration: 0.2s;
+    animation-name: slideout;
+    left: -100vw;
+  }
+
+  .inner {
+    padding: 24px;
+    word-break: break-all;
+  }
+}
+
+@keyframes slidein {
+  from {
+    left: -100vw;
+  }
+
+  to {
+    left: 0;
+  }
+}
+
+@keyframes slideout {
+  from {
+    left: 0;
+  }
+
+  to {
+    left: -100vw;
+  }
+}
+
+.main {
+  margin-top: 50px;
+}
