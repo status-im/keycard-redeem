@@ -100,7 +100,7 @@
         }
 
         .nft-image {
-          margin: 0 auto;
+          margin: 0 auto 12px;
           max-width: 200px;
           max-height: 200px;
           border-radius: 8px;
@@ -139,8 +139,9 @@
       flex-grow: 1;
       overflow-y: auto;
       .error {
+        font-size: 0.8rem;
         background: red;
-        padding: 8px;
+        padding: 4px;
         font-weight: 500;
         border-radius: 4px;
         color: #fff;
