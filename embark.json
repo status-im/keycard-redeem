@@ -12,7 +12,10 @@
     "embark-geth": {},
     "embark-parity": {},
     "embark-profiler": {},
-    "embark-graph": {}
+    "embark-graph": {},
+    "@trailofbits/embark-contract-info": {
+	"flags": ""
+     }
   },
   "options": {
     "solc": {

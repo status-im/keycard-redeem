@@ -40,7 +40,8 @@
     "typeface-roboto": "^0.0.75",
     "typescript": "^3.8.3",
     "web3": "1.2.7",
-    "web3-eth": "1.2.7"
+    "web3-eth": "1.2.7",
+    "@trailofbits/embark-contract-info": "^1.1.0"
   },
   "eslintConfig": {
     "extends": "react-app"
