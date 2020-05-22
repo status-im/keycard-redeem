@@ -130,10 +130,10 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       }
 
       const redeem = bucket.methods.redeem(message, sig);
-      // const gas = await redeem.estimateGas();
+      const gas = await redeem.estimateGas();
       redeem.send({
         from: account,
-        // gas
+        gas
       }).then((resp: any) => {
         dispatch(redeemDone(resp.transactionHash));
       }).catch((err: any) => {

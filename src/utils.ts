@@ -29,3 +29,7 @@ export const toBaseUnit = (fullAmount: string, decimalsSize: number, roundDecima
 export const isTokenERC20 = (token: Token): token is TokenERC20 => {
   return (token as TokenERC20).decimals !== undefined;
 }
+
+export const compressAddress = (a: string, padding: number = 4) => {
+  return `${a.slice(0, padding + 2)}...${a.slice(a.length - padding)}`;
+}
