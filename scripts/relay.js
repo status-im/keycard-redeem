@@ -4,6 +4,7 @@ const parseArgs = require('minimist');
 const Account = require('./account.js');
 const utils = require('./utils.js');
 const fs = require('fs');
+const morgan = require("morgan");
 
 const argv = parseArgs(process.argv.slice(2), {string: ["sender", "bucket"], default: {"endpoint": "ws://127.0.0.1:8546"}});
 const web3 =  new Web3(argv["endpoint"]);
@@ -11,8 +12,10 @@ const account = new Account(web3);
 
 const BucketConfig = utils.loadJSON(`./dist/contracts/Bucket.json`);
 
+const port = process.env.PORT || 3000;
 const app = express();
-const port = 3000;
+app.use(morgan('combined'))
+
 let allowedBuckets = [];
 
 async function redeem(message, sig) {
@@ -44,6 +47,8 @@ function validateRequest(body) {
     return "invalid bucket address";
   } else if (!validateBucket(body.bucket)) {
     return "cannot send to this bucket";
+  } else if (body.message === undefined) {
+    return "message must be specified";
   } else if (!validateNumber(body.message.blockNumber)) {
     return "invalid block number";
   } else if (!validate32Bytes(body.message.blockHash)) {
@@ -57,9 +62,17 @@ function validateRequest(body) {
   }
 }
 
-async function redeemRequest(req, res) {
-  let err = validateRequest(req.body);
+async function redeemOptions(req, res) {
+  res.append("Access-Control-Allow-Origin", ["*"]);
+  res.append("Access-Control-Allow-Headers", ["*"]);
+  res.json({message: "ok"})
+}
 
+async function redeemRequest(req, res) {
+  res.append("Access-Control-Allow-Origin", ["*"]);
+  res.append("Access-Control-Allow-Headers", ["*"]);
+
+  let err = validateRequest(req.body);
   if (err) {
     res.status(400).json({error: err});
   }
@@ -68,6 +81,7 @@ async function redeemRequest(req, res) {
     let receipt = await redeem(req.body.bucket, req.body.message, req.body.sig);
     res.json({tx: receipt.transactionHash});
   } catch(e) {
+    console.error(e)
     res.status(500).json({error: "Couldn't send tx"});
   }
 }
@@ -117,6 +131,7 @@ async function run() {
 
   app.use(express.json());
   app.post('/redeem', redeemRequest);
+  app.options('/redeem', redeemOptions);
   app.get('/bucket/:address', bucketRequest);
   app.listen(port, () => console.log(`Relayer listening at http://localhost:${port}`));
 }
