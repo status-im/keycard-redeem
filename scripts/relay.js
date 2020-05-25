@@ -18,7 +18,7 @@ app.use(morgan('combined'))
 
 let allowedBuckets = [];
 
-async function redeem(message, sig) {
+async function redeem(bucket, message, sig) {
   const Bucket = utils.json2Contract(web3, BucketConfig);
   Bucket.transactionConfirmationBlocks = 1;
   Bucket.options.address = bucket;
