@@ -1,0 +1,13 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "express": "^4.17.1",
+    "minimist": "^1.2.5",
+    "morgan": "^1.10.0",
+    "web3": "^1.2.8"
+  }
+}
