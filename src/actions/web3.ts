@@ -4,6 +4,7 @@ import {
   Dispatch,
 } from 'redux';
 import { RootState } from '../reducers';
+import { debug } from "./debug";
 
 export const VALID_NETWORK_NAME = "Ropsten";
 export const VALID_NETWORK_ID = 3;
@@ -86,6 +87,7 @@ export const initializeWeb3 = () => {
               return;
             }
 
+            dispatch(debug(`network id: ${id}`))
             dispatch(web3NetworkIDLoaded(id))
             dispatch<any>(loadAddress());
           });
@@ -98,6 +100,7 @@ export const initializeWeb3 = () => {
       const t: Web3Type = w.ethereum.isStatus ? Web3Type.Status : Web3Type.Generic;
       dispatch(web3Initialized(t));
       config.web3!.eth.net.getId().then((id: number) => {
+        dispatch(debug(`network id: ${id}`))
         dispatch(web3NetworkIDLoaded(id))
         dispatch<any>(loadAddress());
       })
@@ -114,6 +117,7 @@ export const initializeWeb3 = () => {
 const loadAddress = () => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     config.web3!.eth.getAccounts().then((accounts: string[]) => {
+      dispatch(debug(`current account: ${accounts[0]}`));
       dispatch(accountLoaded(accounts[0]));
     });
   };

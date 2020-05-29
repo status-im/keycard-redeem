@@ -10,12 +10,24 @@ export interface LayoutFlipCardAction {
   flipped: boolean
 }
 
+export const LAYOUT_TOGGLE_DEBUG = "LAYOUT_TOGGLE_DEBUG";
+export interface LayoutToggleDebugAction {
+  type: typeof LAYOUT_TOGGLE_DEBUG
+  open: boolean
+}
+
 export type LayoutActions =
   LayoutToggleSidebarAction |
-  LayoutFlipCardAction;
+  LayoutFlipCardAction |
+  LayoutToggleDebugAction;
 
 export const toggleSidebar = (open: boolean): LayoutToggleSidebarAction => ({
   type: LAYOUT_TOGGLE_SIDEBAR,
+  open,
+});
+
+export const toggleDebug = (open: boolean): LayoutToggleDebugAction => ({
+  type: LAYOUT_TOGGLE_DEBUG,
   open,
 });
 

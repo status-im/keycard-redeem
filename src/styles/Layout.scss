@@ -16,53 +16,6 @@ body {
   font-family: "Roboto", "Helvetica", "Arial", sans-serif;
 }
 
-.sidebar {
-  z-index: 9999;
-  background: #fff;
-  position: absolute;
-  top: 0;
-  left: -100vw;
-  min-height: 100vh;
-  width: 100vw;
-
-  &.open {
-    animation-duration: 0.2s;
-    animation-name: slidein;
-    left: 0;
-  }
-
-  &.closed {
-    animation-duration: 0.2s;
-    animation-name: slideout;
-    left: -100vw;
-  }
-
-  .inner {
-    padding: 24px;
-    word-break: break-all;
-  }
-}
-
-@keyframes slidein {
-  from {
-    left: -100vw;
-  }
-
-  to {
-    left: 0;
-  }
-}
-
-@keyframes slideout {
-  from {
-    left: 0;
-  }
-
-  to {
-    left: -100vw;
-  }
-}
-
 .main {
   margin-top: 50px;
 

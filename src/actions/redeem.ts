@@ -6,12 +6,7 @@ import { sha3 } from "web3-utils";
 import { recoverTypedSignature } from 'eth-sig-util';
 import { Web3Type } from "../actions/web3";
 import { KECCAK_EMPTY_STRING } from '../utils';
-
-const sleep = (ms: number) => {
-  return new Promise(resolve => {
-    window.setTimeout(resolve, ms);
-  });
-}
+import { debug } from "./debug";
 
 interface RedeemMessage {
   receiver: string
@@ -22,7 +17,7 @@ interface RedeemMessage {
 
 interface SignRedeemResponse {
   sig: string
-  address: string
+  signer: string
 }
 
 export const ERROR_REDEEMING = "ERROR_REDEEMING";
@@ -105,6 +100,11 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
 
     const bucket = newBucketContract(bucketAddress);
     const account = state.web3.account;
+    if (account === undefined) {
+      //FIXME: show error?
+      return;
+    }
+
     const block = await config.web3!.eth.getBlock("latest");
 
     const message = {
@@ -182,7 +182,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   };
 
   if (web3Type === Web3Type.Status) {
-    return signWithKeycard(signer, data);
+    return signWithKeycard(data);
   } else {
     return signWithWeb3(signer, data);
   }

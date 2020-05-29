@@ -1,4 +1,6 @@
 import { RootState } from '../reducers';
+import ERC20BucketFactory from '../embarkArtifacts/contracts/ERC20BucketFactory';
+import NFTBucketFactory from '../embarkArtifacts/contracts/NFTBucketFactory';
 import ERC20Bucket from '../embarkArtifacts/contracts/ERC20Bucket';
 import Bucket from '../embarkArtifacts/contracts/Bucket';
 import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
@@ -6,6 +8,7 @@ import IERC721Metadata from '../embarkArtifacts/contracts/IERC721Metadata';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 import { ZERO_ADDRESS } from "../utils";
+import { debug } from "./debug";
 
 export const ERROR_REDEEMABLE_NOT_FOUND = "ERROR_REDEEMABLE_NOT_FOUND";
 export interface ErrRedeemableNotFound {
@@ -176,6 +179,10 @@ export const newERC20BucketContract = (address: string) => {
 
 export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
+    dispatch(debug(`erc20 factory address: ${ERC20BucketFactory.address}`));
+    dispatch(debug(`nft factory address: ${NFTBucketFactory.address}`));
+    dispatch(debug(`bucket address: ${bucketAddress}`));
+    dispatch(debug(`recipient address: ${recipientAddress}`));
     dispatch(loadingRedeemable(bucketAddress, recipientAddress));
     const bucket = newBucketContract(bucketAddress);
     bucket.methods.expirationTime().call().then((expirationTime: number) => {
@@ -231,9 +238,11 @@ export const loadERC20Token = (bucket: any, data: string, recipient: string) => 
 
       const symbol = await erc20.methods.symbol().call();
       const decimals = parseInt(await erc20.methods.decimals().call());
+      dispatch(debug(`erc20 token: ${symbol} ${address}`));
       dispatch(tokenLoaded({symbol, decimals}));
     }).catch((err: string) => {
       //FIXME: manage error
+      dispatch(debug(`error loading token: ${err})`));
       console.error("ERROR: ", err);
     })
   }
@@ -251,6 +260,8 @@ export const loadNFTToken = (bucket: any, data: string, recipient: string) => {
       dispatch(tokenLoaded({symbol, tokenURI, metadata: undefined}));
       dispatch(loadingTokenMetadata(address, recipient))
 
+      dispatch(debug(`nft token: ${symbol} ${address}`));
+
       fetch(tokenURI)
         .then(response => response.json())
         .then(data => {
@@ -261,10 +272,12 @@ export const loadNFTToken = (bucket: any, data: string, recipient: string) => {
           }));
         })
         .catch((err: string) => {
+          dispatch(debug(`error loading metadata: ${err})`));
           //FIXME: manage error
           console.error("ERROR: ", err);
         });
     }).catch((err: string) => {
+      dispatch(debug(`error loading token: ${err})`));
       //FIXME: manage error
       console.error("ERROR: ", err);
     })

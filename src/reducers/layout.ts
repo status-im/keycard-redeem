@@ -1,17 +1,20 @@
 import {
   LayoutActions,
   LAYOUT_TOGGLE_SIDEBAR,
+  LAYOUT_TOGGLE_DEBUG,
   LAYOUT_FLIP_CARD,
 } from "../actions/layout";
 
 export interface LayoutState {
   sidebarOpen: boolean,
   cardFlipped: boolean,
+  debugOpen: boolean,
 }
 
 const initialState: LayoutState = {
   sidebarOpen: false,
   cardFlipped: false,
+  debugOpen: false,
 }
 
 export const layoutReducer = (state: LayoutState = initialState, action: LayoutActions): LayoutState => {
@@ -20,6 +23,12 @@ export const layoutReducer = (state: LayoutState = initialState, action: LayoutA
       return {
         ...state,
         sidebarOpen: action.open,
+      };
+
+    case LAYOUT_TOGGLE_DEBUG:
+      return {
+        ...state,
+        debugOpen: action.open,
       };
 
     case LAYOUT_FLIP_CARD:

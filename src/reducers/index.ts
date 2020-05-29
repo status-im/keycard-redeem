@@ -17,12 +17,17 @@ import {
   LayoutState,
   layoutReducer,
 } from './layout';
+import {
+  DebugState,
+  debugReducer,
+} from './debug';
 
 export interface RootState {
   web3: Web3State,
   redeemable: RedeemableState,
   redeem: RedeemState,
   layout: LayoutState,
+  debug: DebugState,
 }
 
 export default function(history: History) {
@@ -32,5 +37,6 @@ export default function(history: History) {
     redeemable: redeemableReducer,
     redeem: redeemReducer,
     layout: layoutReducer,
+    debug: debugReducer,
   });
 }

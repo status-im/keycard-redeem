@@ -27,12 +27,17 @@ import {
   ERROR_REDEEMING,
   ERROR_WRONG_SIGNER,
 } from '../actions/redeem';
-import { flipCard } from "../actions/layout";
+import {
+  flipCard,
+  toggleDebug,
+} from "../actions/layout";
 import "../styles/Redeemable.scss";
+import "../styles/Debug.scss";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUndo as flipIcon,
   faUndo as unflipIcon,
+  faWrench as debugIcon,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -55,7 +60,7 @@ const redeemErrorMessage = (error: RedeemErrors): string => {
       return `wrong signer. expected signature from ${error.expected}, got signature from ${error.actual}`;
 
     case ERROR_REDEEMING:
-      return `redeem error: ${error.message}`;
+      return error.message;
 
     default:
       return "something went wrong";
@@ -99,6 +104,8 @@ export default function(ownProps: any) {
       redeemError: state.redeem.error,
       redeemTxHash: state.redeem.txHash,
       cardFlipped: state.layout.cardFlipped,
+      debugLines: state.debug.lines,
+      debugOpen: state.layout.debugOpen,
     }
   }, shallowEqual);
 
@@ -179,7 +186,8 @@ export default function(ownProps: any) {
 
   const backClass = classNames({ side: true, back: true });
 
-  return <div className={cardClass}>
+  return <div>
+    <div className={cardClass}>
       <div className={frontClass}>
         <div className="header">
           <button className="flip" onClick={ () => { dispatch(flipCard(true)) } }>
@@ -195,7 +203,7 @@ export default function(ownProps: any) {
             {tokenContent}
           </div>
           {props.redeemError && <div className="error">
-            Error: {redeemErrorMessage(props.redeemError)}
+            {redeemErrorMessage(props.redeemError)}
           </div>}
           {props.redeemTxHash && <div className="success">
             Done! Tx Hash: {props.redeemTxHash}
@@ -241,5 +249,17 @@ export default function(ownProps: any) {
         <div className="footer">
         </div>
       </div>
+    </div>
+    <div className="debug">
+      <FontAwesomeIcon
+        onClick={() => dispatch(toggleDebug(!props.debugOpen)) }
+        icon={debugIcon}
+        className="btn" />
+      {props.debugOpen && <ul>
+        {props.debugLines.map((text: string, i: number) => (<li key={i}>
+          {text}
+        </li>))}
+      </ul>}
+    </div>
   </div>;
 }
