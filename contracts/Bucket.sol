@@ -13,6 +13,8 @@ abstract contract Bucket {
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
   bytes32 DOMAIN_SEPARATOR;
 
+  string _relayerURI;
+
   struct Redeemable {
     address recipient;
     bytes32 code;
@@ -145,5 +147,13 @@ abstract contract Bucket {
     ));
 
     return ecrecover(digest, v, r, s);
+  }
+
+  function setRelayerURI(string calldata uri) external onlyOwner {
+    _relayerURI = uri;
+  }
+
+  function relayerURI() public view returns (string memory) {
+    return _relayerURI;
   }
 }
