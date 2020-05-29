@@ -2,6 +2,7 @@
   "name": "gift-keycard",
   "version": "0.0.1",
   "description": "",
+  "homepage": "./",
   "scripts": {
     "test": "embark test",
     "start": "react-scripts start",
@@ -27,7 +28,6 @@
     "connected-react-router": "^6.7.0",
     "eth-sig-util": "^2.5.3",
     "history": "^4.10.1",
-    "minimist": "^1.2.3",
     "node-sass": "^4.14.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -39,7 +39,7 @@
     "redux-thunk": "^2.3.0",
     "typeface-roboto": "^0.0.75",
     "typescript": "^3.8.3",
-    "web3": "1.2.7",
+    "web3": "^1.2.7",
     "web3-eth": "1.2.7"
   },
   "eslintConfig": {
