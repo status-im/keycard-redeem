@@ -116,29 +116,18 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
 
     const domainName = isERC20 ? "KeycardERC20Bucket" : "KeycardNFTBucket";
     //FIXME: is signer needed?
-    signRedeem(web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, address }: SignRedeemResponse) => {
+    dispatch(debug("signing redeem"));
+    signRedeem(web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, signer }: SignRedeemResponse) => {
+      dispatch(debug(`signature: ${sig}, signer: ${signer}`));
       const recipient = state.redeemable.recipient!;
-      if (address.toLowerCase() !== recipient.toLowerCase()) {
+      if (signer.toLowerCase() !== recipient.toLowerCase()) {
         //FIXME: handle error
-        dispatch(wrongSigner(recipient, address));
+        dispatch(wrongSigner(recipient, signer));
         return;
       }
 
-      //FIXME: remove! hack to wait for the request screen to slide down
-      if (state.web3.type === Web3Type.Status) {
-        await sleep(3000);
-      }
+      dispatch<any>(sendTransaction(account, bucket, bucketAddress, message, sig));
 
-      const redeem = bucket.methods.redeem(message, sig);
-      const gas = await redeem.estimateGas();
-      redeem.send({
-        from: account,
-        gas
-      }).then((resp: any) => {
-        dispatch(redeemDone(resp.transactionHash));
-      }).catch((err: any) => {
-        dispatch(redeemError(err.reason || err.message || err))
-      });
     }).catch((err: any) => {
       console.error("sign redeem error reason:", err.reason);
       console.error("sign redeem error:", err);
@@ -199,28 +188,102 @@ const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> =>
         reject(err);
       } else {
         const sig = resp.result;
-        const address = recoverTypedSignature({
+        const signer = recoverTypedSignature({
           data,
           sig
         });
 
-        resolve({ sig, address });
+        resolve({ sig, signer });
       }
     })
   });
 }
 
-const signWithKeycard = (signer: string, data: any): Promise<SignRedeemResponse> => {
+const signWithKeycard = (data: any): Promise<SignRedeemResponse> => {
   return new Promise((resolve, reject) => {
-    (window as any).ethereum.send("keycard_signTypedData", [signer, JSON.stringify(data)]).then((resp: any) => {
+    (window as any).ethereum.send("keycard_signTypedData", JSON.stringify(data)).then((resp: any) => {
       const sig = resp.result;
-      const address = recoverTypedSignature({
+      const signer = recoverTypedSignature({
         data,
         sig
       });
-      resolve({ sig, address });
+      resolve({ sig, signer });
     }).catch((err: string) => {
       reject(err);
     })
   });
+}
+
+//FIXME: fix bucket contract type
+const sendTransaction = (account: string, bucket: any, bucketAddress: string, message: RedeemMessage, sig: string) => {
+  return (dispatch: Dispatch, getState: () => RootState) => {
+    bucket.methods.relayerURI().call().then((uri: string) => {
+      if (uri === "") {
+        dispatch<any>(sendEthTransaction(account, bucket, message, sig));
+      } else {
+        dispatch<any>(sendTransactionToRelayer(uri, bucket.address, message, sig));
+      }
+    }).catch((err: any) => {
+      dispatch(debug(`error getting relayerURI: ${err}`));
+    });
+  }
+}
+
+//FIXME: fix bucket contract type
+const sendEthTransaction = (account: string, bucket: any, message: RedeemMessage, sig: string) => {
+  return async (dispatch: Dispatch, getState: () => RootState) => {
+    const redeem = bucket.methods.redeem(message, sig);
+    dispatch(debug(`calling estimateGas`));
+    redeem.estimateGas().then((gas: number) => {
+      dispatch(debug(`gas ${gas}`));
+      dispatch(debug(`sending eth transaction`));
+      redeem.send({
+        from: account,
+        gas
+      }).then((resp: any) => {
+        dispatch(redeemDone(resp.transactionHash));
+      }).catch((err: any) => {
+        dispatch(debug(err.reason || err.message || err))
+        dispatch(redeemError(err.reason || err.message || err))
+      });
+    }).catch((err: any) => {
+      dispatch(debug(`error get gas estimation: ${err.reason || err.message || err}`))
+      dispatch(redeemError(err.reason || err.message || err))
+    });
+  }
+}
+
+const sendTransactionToRelayer = (uri: string, bucketAddress: string, message: RedeemMessage, sig: string) => {
+  return (dispatch: Dispatch, getState: () => RootState) => {
+    dispatch(debug(`sending transaction to relayer: ${uri}`));
+    const body = {
+      bucket: bucketAddress,
+      message: message,
+      sig: sig,
+    };
+
+    const options = {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+
+    fetch(uri, options)
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.error !== undefined) {
+          throw(data.error);
+        }
+
+        dispatch(redeemDone(data.tx));
+        console.log(data)
+      })
+      .catch((err: string) => {
+        dispatch(debug(`error posting transaction to relayer: ${uri}, ${err}`));
+        dispatch(redeemError("error posting transaction to relay server"))
+        console.error(err);
+      });
+  }
 }
