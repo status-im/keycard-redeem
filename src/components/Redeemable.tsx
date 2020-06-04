@@ -36,7 +36,6 @@ import "../styles/Debug.scss";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUndo as flipIcon,
-  faUndo as unflipIcon,
   faWrench as debugIcon,
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -134,7 +133,7 @@ export default function(ownProps: any) {
   }
 
   const erc20Header = (token: TokenERC20) => {
-    const [displayAmount, roundedDisplayAmount] = toBaseUnit(props.amount!, token.decimals, 2);
+    const roundedDisplayAmount = toBaseUnit(props.amount!, token.decimals, 2);
     return <>
       <span className="amount">{roundedDisplayAmount}</span>
       <span className="erc20-symbol">{token.symbol}</span>

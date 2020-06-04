@@ -1,12 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
-import ERC20BucketFactory from '../embarkArtifacts/contracts/ERC20BucketFactory';
 import { RootState } from '../reducers';
 import {
   shallowEqual,
   useSelector,
 } from 'react-redux';
-import { Web3Type } from "../actions/web3";
 import "../styles/Layout.scss";
 
 export default function(ownProps: any) {
@@ -20,11 +18,6 @@ export default function(ownProps: any) {
       sidebarOpen: state.layout.sidebarOpen,
     }
   }, shallowEqual);
-
-  const sidebarClass = classNames({
-    sidebar: true,
-    open: props.sidebarOpen,
-  });
 
   return <div className="main">
     {props.error && <div className={classNames({ paper: true, error: true })}>

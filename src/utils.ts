@@ -20,10 +20,7 @@ export const toBaseUnit = (fullAmount: string, decimalsSize: number, roundDecima
     decimals = `0${decimals}`;
   }
 
-  const full = `${whole}.${decimals}`;
-  const rounded = `${whole}.${decimals.slice(0, roundDecimals)}`;
-
-  return [full, rounded];
+  return `${whole}.${decimals.slice(0, roundDecimals)}`;
 }
 
 export const isTokenERC20 = (token: Token): token is TokenERC20 => {

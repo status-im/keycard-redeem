@@ -8,6 +8,7 @@ import { debug } from "./debug";
 
 export const VALID_NETWORK_NAME = "Ropsten";
 export const VALID_NETWORK_ID = 3;
+
 // export const VALID_NETWORK_NAME = "Goerli";
 // export const VALID_NETWORK_ID = 5;
 export const LOCAL_NETWORK_ID = 1337;

@@ -105,13 +105,14 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       return;
     }
 
-    const block = await config.web3!.eth.getBlock("latest");
+    const latestBlock = await config.web3!.eth.getBlock("latest");
+    const prevBlock = await config.web3!.eth.getBlock(latestBlock.number - 1);
 
     const message = {
       receiver: state.web3.account!,
       code: finalCode!,
-      blockNumber: block.number,
-      blockHash:  block.hash,
+      blockNumber: prevBlock.number,
+      blockHash:  prevBlock.hash,
     };
 
     const domainName = isERC20 ? "KeycardERC20Bucket" : "KeycardNFTBucket";
@@ -234,7 +235,7 @@ const sendEthTransaction = (account: string, bucket: any, message: RedeemMessage
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const redeem = bucket.methods.redeem(message, sig);
     dispatch(debug(`calling estimateGas`));
-    redeem.estimateGas().then((gas: number) => {
+    redeem.estimateGas({ from: account }).then((gas: number) => {
       dispatch(debug(`gas ${gas}`));
       dispatch(debug(`sending eth transaction`));
       redeem.send({
@@ -243,12 +244,12 @@ const sendEthTransaction = (account: string, bucket: any, message: RedeemMessage
       }).then((resp: any) => {
         dispatch(redeemDone(resp.transactionHash));
       }).catch((err: any) => {
-        dispatch(debug(err.reason || err.message || err))
-        dispatch(redeemError(err.reason || err.message || err))
+        dispatch(debug(`error: ${err.reason || err.message || err}`));
+        dispatch(redeemError(err.reason || err.message || err));
       });
     }).catch((err: any) => {
-      dispatch(debug(`error get gas estimation: ${err.reason || err.message || err}`))
-      dispatch(redeemError(err.reason || err.message || err))
+      dispatch(debug(`error get gas estimation: ${err.reason || err.message || err}`));
+      dispatch(redeemError(err.reason || err.message || err));
     });
   }
 }
