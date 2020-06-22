@@ -1,0 +1,27 @@
+.debug {
+  width: 300px;
+  margin: 0 auto;
+  font-size: 0.7rem;
+  overflow-wrap: break-word;
+  position: relative;
+  padding-top: 20px;
+
+  .btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.1);
+  }
+
+  ul {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    background: #fff;
+    padding: 12px;
+
+    li {
+      margin-bottom: 8px;
+    }
+  }
+}

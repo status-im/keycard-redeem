@@ -33,20 +33,21 @@ module.exports = {
       TestToken: {
         args: ["TEST", 18],
       },
-      ERC20BucketFactory: {
+      TestNFT: {
         params: [],
       },
-      ERC20Bucket: {
+      ERC20BucketFactory: {
         params: [],
-        proxyFor: "Bucket",
-        deploy: false,
       },
       NFTBucketFactory: {
         params: [],
       },
+      ERC20Bucket: {
+        params: [],
+        deploy: false,
+      },
       NFTBucket: {
         params: [],
-        proxyFor: "Bucket",
         deploy: false,
       },
     }
