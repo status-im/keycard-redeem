@@ -1,0 +1,7 @@
+/.git
+/.embark
+/yarn-error.log
+/dist
+/build
+/node_modules
+/scripts/node_modules
