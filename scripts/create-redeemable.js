@@ -15,14 +15,14 @@ const account = new Account(web3);
 
 const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
-const BucketFactoryConfig = utils.loadJSON(`./dist/contracts/${classPrefix}BucketFactory.json`);
-const BucketFactory = utils.json2Contract(web3, BucketFactoryConfig);
-const Bucket = utils.loadContract(web3, `./dist/contracts/${classPrefix}Bucket.json`);
-const ERC721 = utils.loadContract(web3, `./dist/contracts/IERC721.json`);
-const ERC20 = utils.loadContract(web3, `./dist/contracts/IERC20Detailed.json`);
+const BucketFactoryCode = utils.loadContractCode(`${classPrefix}BucketFactory`);
+const BucketFactory = utils.loadContract(web3, `${classPrefix}BucketFactory`);
+const Bucket = utils.loadContract(web3, `${classPrefix}Bucket.json`);
+const ERC721 = utils.loadContract(web3, "IERC721");
+const ERC20  = utils.loadContract(web3, "IERC20Detailed");
 
 async function deployFactory() {
-  let code = "0x" + BucketFactoryConfig["code"];
+  let code = "0x" + BucketFactoryCode;
   let methodCall = BucketFactory.deploy({data: code});
   let receipt = await account.sendMethod(methodCall, null);
   return receipt.contractAddress;

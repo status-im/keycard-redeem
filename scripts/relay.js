@@ -10,7 +10,7 @@ const argv = parseArgs(process.argv.slice(2), {string: ["sender", "bucket"], def
 const web3 =  new Web3(argv["endpoint"]);
 const account = new Account(web3);
 
-const BucketConfig = utils.loadJSON(`./dist/contracts/Bucket.json`);
+const Bucket = utils.loadContract(web3, "Bucket");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -19,7 +19,6 @@ app.use(morgan('combined'))
 let allowedBuckets = [];
 
 async function redeem(bucket, message, sig) {
-  const Bucket = utils.json2Contract(web3, BucketConfig);
   Bucket.transactionConfirmationBlocks = 1;
   Bucket.options.address = bucket;
   let methodCall = Bucket.methods.redeem(message, sig);
