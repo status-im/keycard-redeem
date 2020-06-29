@@ -1,4 +1,5 @@
-*keystore*
+.env
+/keystores
 .embark
 chains.json
 config/livenet/password
@@ -9,5 +10,5 @@ build
 embarkArtifacts
 node_modules
 yarn-error.log
-/scripts/contracts
 /src/react-app-env.d.ts
+/scripts/contracts

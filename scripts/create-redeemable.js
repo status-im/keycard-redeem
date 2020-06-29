@@ -17,7 +17,7 @@ const classPrefix = argv["nft"] ? "NFT" : "ERC20";
 
 const BucketFactoryCode = utils.loadContractCode(`${classPrefix}BucketFactory`);
 const BucketFactory = utils.loadContract(web3, `${classPrefix}BucketFactory`);
-const Bucket = utils.loadContract(web3, `${classPrefix}Bucket.json`);
+const Bucket = utils.loadContract(web3, `${classPrefix}Bucket`);
 const ERC721 = utils.loadContract(web3, "IERC721");
 const ERC20  = utils.loadContract(web3, "IERC20Detailed");
 

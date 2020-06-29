@@ -9,7 +9,7 @@ module.exports.loadContractFile = (fileName) => {
 };
 
 module.exports.loadContractCode = (contractName) => {
-  return loadContractFile(`${contractName}.bin`);
+  return this.loadContractFile(`${contractName}.bin`);
 };
 
 module.exports.loadContract = (web3, contractName) => {
