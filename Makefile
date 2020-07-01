@@ -27,7 +27,7 @@ ifndef BUCKET
 endif
 
 run-relayer: check-relayer-env-variables
-	node scripts/relay.js \
+	env PORT=$(PORT) node scripts/relay.js \
 		--endpoint=$(ENDPOINT) \
 		--account=$(KEYSTORES_PATH)/keystore.json \
 		--passfile=$(KEYSTORES_PATH)/keystore-passfile.txt \

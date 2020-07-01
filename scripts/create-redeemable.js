@@ -183,11 +183,15 @@ async function run() {
     const decimals = await getDecimals(argv["amount-decimals"], !argv["nft"]);
 
     let file = fs.readFileSync(argv["file"], 'utf8');
-    keycards = file.split("\n").filter(line => line.trim() !== "").map((line) => processLine(line, decimals));
+    keycards = file
+                .split("\n")
+                .filter(line => line.trim() !== "" && !/^#/.test(line.trim()))
+                .map((line) => processLine(line, decimals));
 
     for (let keycard of keycards) {
       const create = argv["nft"] ? transferNFT : createRedeemable;
       await create(keycard);
+      console.log(`http://test-pn.keycard.cash/redeem/#/buckets/${bucket}/redeemables/${keycard.keycard}`)
     }
   } else if (!hasDoneSomething) {
     console.error("the --file option must be specified");
