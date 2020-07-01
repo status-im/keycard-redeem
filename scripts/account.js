@@ -43,9 +43,15 @@ module.exports = class Account {
       receipt = await methodCall.send({from: this.sender, gas: gasAmount});
     } else {
       let gasAmount = await methodCall.estimateGas({from: this.sender.address});
+      console.log("estimated gas", gasAmount)
       let data = methodCall.encodeABI();
-      let signedTx = await this.sender.signTransaction({to: to, data: data, gas: gasAmount});
+      let signedTx = await this.sender.signTransaction({
+        to: to,
+        data: data,
+        gas: gasAmount,
+      });
       receipt = await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      console.log("gas used", receipt["gasUsed"]);
     }
 
     return receipt;

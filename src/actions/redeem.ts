@@ -222,7 +222,7 @@ const sendTransaction = (account: string, bucket: any, bucketAddress: string, me
       if (uri === "") {
         dispatch<any>(sendEthTransaction(account, bucket, message, sig));
       } else {
-        dispatch<any>(sendTransactionToRelayer(uri, bucket.address, message, sig));
+        dispatch<any>(sendTransactionToRelayer(uri, bucket.options.address, message, sig));
       }
     }).catch((err: any) => {
       dispatch(debug(`error getting relayerURI: ${err}`));

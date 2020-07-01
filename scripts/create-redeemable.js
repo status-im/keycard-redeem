@@ -21,6 +21,9 @@ const Bucket = utils.loadContract(web3, `${classPrefix}Bucket`);
 const ERC721 = utils.loadContract(web3, "IERC721");
 const ERC20  = utils.loadContract(web3, "IERC20Detailed");
 
+const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+const KECCAK_EMPTY_STRING2 = web3.utils.sha3(KECCAK_EMPTY_STRING);
+
 async function deployFactory() {
   let code = "0x" + BucketFactoryCode;
   let methodCall = BucketFactory.deploy({data: code});
@@ -38,7 +41,8 @@ async function deployBucket(factory, token, startInDays, validityInDays, maxTxDe
 
   try {
     let receipt = await account.sendMethod(methodCall, BucketFactory.options.address);
-    return receipt.events.BucketCreated.returnValues.bucket;
+    let bucketAddress = receipt.logs[0].topics[2].slice(26);
+    return `0x${bucketAddress}`;
   } catch(err) {
     console.error(err);
     return null;
@@ -46,6 +50,7 @@ async function deployBucket(factory, token, startInDays, validityInDays, maxTxDe
 }
 
 async function createRedeemable(keycard) {
+  console.log("creating redeemable", keycard.keycard, keycard.amount)
   let methodCall = Bucket.methods.createRedeemable(keycard.keycard, keycard.amount, keycard.code);
 
   try {
@@ -74,11 +79,15 @@ async function transferNFT(keycard) {
 }
 
 function processCode(code) {
+  if (code === "" || code === undefined) {
+    return KECCAK_EMPTY_STRING2;
+  }
+
   if (!code.startsWith("0x")) {
     code = "0x" + Buffer.from(code, 'utf8').toString('hex');
   }
 
-  return "0x" + keccak256(code);
+  return "0x" + web3.utils.sha3(code);
 }
 
 function processAmount(amount, decimals) {
@@ -146,6 +155,15 @@ async function run() {
     }
 
     bucket = await deployBucket(factory, argv["token"], argv["start-in-days"], argv["validity-days"], argv["max-tx-delay-blocks"]);
+
+    if (argv["relayer-uri"] !== undefined && argv["relayer-uri"] !== "") {
+      const uri = argv["relayer-uri"];
+      Bucket.options.address = bucket;
+      console.log("setting relayer URI to ", uri);
+      let setRelayerURI = Bucket.methods.setRelayerURI(uri);
+      await account.sendMethod(setRelayerURI, bucket);
+    }
+
     hasDoneSomething = true;
     console.log("Bucket deployed at: " + bucket);
   } else {
@@ -165,10 +183,11 @@ async function run() {
     const decimals = await getDecimals(argv["amount-decimals"], !argv["nft"]);
 
     let file = fs.readFileSync(argv["file"], 'utf8');
-    keycards = file.split("\n").map((line) => processLine(line, decimals));
+    keycards = file.split("\n").filter(line => line.trim() !== "").map((line) => processLine(line, decimals));
 
     for (let keycard of keycards) {
-      await argv["nft"] ? transferNFT(keycard) : createRedeemable(keycard);
+      const create = argv["nft"] ? transferNFT : createRedeemable;
+      await create(keycard);
     }
   } else if (!hasDoneSomething) {
     console.error("the --file option must be specified");
