@@ -38,6 +38,7 @@ build-relayer-docker-image:
 
 docker-run-relayer: check-relayer-env-variables
 	docker run \
+		-d \
 		-v $$(realpath $(KEYSTORES_PATH)):$(CONTAINER_KEYSTORES_PATH) \
 		-e KEYSTORES_PATH=$(CONTAINER_KEYSTORES_PATH) \
 		-e ENDPOINT=$(ENDPOINT) \
