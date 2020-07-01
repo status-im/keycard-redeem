@@ -16,8 +16,6 @@ const port = process.env.PORT || 3000;
 const app = express();
 app.use(morgan('combined'))
 
-let allowedBuckets = [];
-
 async function redeem(bucket, message, sig) {
   Bucket.transactionConfirmationBlocks = 1;
   Bucket.options.address = bucket;
@@ -37,15 +35,17 @@ function validateNumber(num) {
   return !isNaN(parseInt(num));
 }
 
-function validateBucket(bucket) {
-  return allowedBuckets.includes(bucket.toLowerCase());
+async function validateBucket(bucket) {
+  Bucket.options.address = bucket;
+  const owner = await Bucket.methods.owner().call();
+  return account.address() === owner;
 }
 
-function validateRequest(body) {
+async function validateRequest(body) {
   if (!validateAddress(body.bucket)) {
     return "invalid bucket address";
-  } else if (!validateBucket(body.bucket)) {
-    return "cannot send to this bucket";
+  } else if (!await validateBucket(body.bucket)) {
+    return "invalid bucket owner";
   } else if (body.message === undefined) {
     return "message must be specified";
   } else if (!validateNumber(body.message.blockNumber)) {
@@ -71,7 +71,7 @@ async function redeemRequest(req, res) {
   res.append("Access-Control-Allow-Origin", ["*"]);
   res.append("Access-Control-Allow-Headers", ["*"]);
 
-  let err = validateRequest(req.body);
+  let err = await validateRequest(req.body);
   if (err) {
     res.status(400).json({error: err});
   }
@@ -85,53 +85,12 @@ async function redeemRequest(req, res) {
   }
 }
 
-function bucketRequest(req, res) {
-  if (validateBucket(req.params.address)) {
-    res.status(200).json({"allowed": true});
-  } else {
-    res.status(404).json({"allowed": false});
-  }
-}
-
-function loadBucketList(path) {
-  let file = fs.readFileSync(path, 'utf8');
-  allowedBuckets = file.split("\n").map((line) => line.toLowerCase().trim());
-}
-
-function checkBuckets() {
-  allowedBuckets = allowedBuckets.filter((line) => {
-    if (validateAddress(line)) {
-      return true;
-    } else {
-      console.warn(`${line} is an invalid bucket address, ignored`);
-      return false;
-    }
-  });
-
-  if (allowedBuckets.length == 0) {
-    console.error("no valid buckets, exiting");
-    process.exit(1);
-  }
-}
-
 async function run() {
-  if (argv["bucket-list"]) {
-    loadBucketList(argv["bucket-list"]);
-  } else if (argv["bucket"]) {
-    allowedBuckets = [argv["bucket"].toLowerCase()];
-  } else {
-    console.error("the either the --bucket or --bucket-list option must be specified");
-    process.exit(1);
-  }
-
-  checkBuckets();
-
   await account.init(argv);
 
   app.use(express.json());
   app.post('/redeem', redeemRequest);
   app.options('/redeem', redeemOptions);
-  app.get('/bucket/:address', bucketRequest);
   app.listen(port, () => console.log(`Relayer listening at http://localhost:${port}`));
 }
 

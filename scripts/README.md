@@ -81,10 +81,6 @@ The options are
 
 `--passfile`: the path to a file storing the password for the JSON encoded private key. Always used with --account.
 
-`--bucket-list`: a file containing a list of bucket addresses one per line. Only transactions to these addresses will be accepted
-
-`--bucket`: same as above, but instead a single address is provided on the command line directly.
-
 ### HTTP interface
 
 The http interface is very simple

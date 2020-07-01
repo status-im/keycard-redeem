@@ -28,6 +28,9 @@ module.exports = class Account {
     return accounts[0];
   }
 
+  address() {
+    return this.sender.address;
+  }
 
   loadAccount(account, passfile) {
     let json = fs.readFileSync(account, "utf-8");
