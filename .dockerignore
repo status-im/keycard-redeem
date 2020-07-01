@@ -6,4 +6,5 @@
 /dist
 /build
 /node_modules
+/scripts/contracts
 /scripts/node_modules

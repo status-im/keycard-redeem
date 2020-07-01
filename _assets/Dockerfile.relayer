@@ -5,7 +5,7 @@ WORKDIR /usr/relayer
 COPY . .
 
 RUN yarn && \
-    cd scripts && yarn && cd ../ \
+    cd scripts && yarn && cd ../ && \
     make build-relayer-contracts
 
 EXPOSE 3000
