@@ -1,4 +1,4 @@
-pragma solidity ^0.6.1;
+pragma solidity ^0.5.16;
 
 // https://github.com/ethereum/EIPs/issues/20
 
