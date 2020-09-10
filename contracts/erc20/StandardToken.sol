@@ -1,4 +1,4 @@
-pragma solidity ^0.6.1;
+pragma solidity ^0.5.16;
 
 import "./IERC20.sol";
 
@@ -15,7 +15,6 @@ contract StandardToken is IERC20 {
         uint256 _value
     )
         external
-        override(IERC20)
         returns (bool success)
     {
         return transfer(msg.sender, _to, _value);
@@ -23,7 +22,6 @@ contract StandardToken is IERC20 {
 
     function approve(address _spender, uint256 _value)
         external
-        override(IERC20)
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -37,7 +35,6 @@ contract StandardToken is IERC20 {
         uint256 _value
     )
         external
-        override(IERC20)
         returns (bool success)
     {
         if (balances[_from] >= _value &&
@@ -53,7 +50,6 @@ contract StandardToken is IERC20 {
     function allowance(address _owner, address _spender)
         external
         view
-        override(IERC20)
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];
@@ -62,7 +58,6 @@ contract StandardToken is IERC20 {
     function balanceOf(address _owner)
         external
         view
-        override(IERC20)
         returns (uint256 balance)
     {
         return balances[_owner];
@@ -71,7 +66,6 @@ contract StandardToken is IERC20 {
     function totalSupply()
         external
         view
-        override(IERC20)
         returns(uint256 currentTotalSupply)
     {
         return supply;

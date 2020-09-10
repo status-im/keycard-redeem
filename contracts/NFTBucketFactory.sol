@@ -1,4 +1,4 @@
-pragma solidity ^0.6.1;
+pragma solidity ^0.5.16;
 
 import "./NFTBucket.sol";
 import "./Proxy.sol";

@@ -1,4 +1,4 @@
-pragma solidity ^0.6.1;
+pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
 import "./Bucket.sol";
@@ -41,18 +41,18 @@ contract ERC20Bucket is Bucket {
     redeemableSupply += amount;
   }
 
-  function transferRedeemable(uint256 data, Redeem memory redeem) internal override {
+  function transferRedeemable(uint256 data, Redeem memory redeem) internal {
     require(redeemableSupply >= data, "not enough redeemable supply");
     redeemableSupply -= data;
     IERC20(tokenAddress).transfer(redeem.receiver, data);
   }
 
-  function transferRedeemablesToOwner() internal override {
+  function transferRedeemablesToOwner() internal {
     bool success = IERC20(tokenAddress).transfer(owner, this.totalSupply());
     assert(success);
   }
 
-  function bucketType() external override returns (uint256) {
+  function bucketType() external returns (uint256) {
     return 20;
   }
 }
