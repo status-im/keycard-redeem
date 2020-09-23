@@ -21,6 +21,10 @@ import {
   DebugState,
   debugReducer,
 } from './debug';
+import {
+  BucketsState,
+  bucketsReducer,
+} from './buckets';
 
 export interface RootState {
   web3: Web3State,
@@ -28,6 +32,7 @@ export interface RootState {
   redeem: RedeemState,
   layout: LayoutState,
   debug: DebugState,
+  buckets: BucketsState,
 }
 
 export default function(history: History) {
@@ -38,5 +43,6 @@ export default function(history: History) {
     redeem: redeemReducer,
     layout: layoutReducer,
     debug: debugReducer,
+    buckets: bucketsReducer,
   });
 }

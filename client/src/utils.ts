@@ -4,6 +4,9 @@ import {
   Token,
   TokenERC20,
 } from "./actions/redeemable";
+import { AbiItem } from "web3-utils";
+import Bucket from './contracts/Bucket.json';
+import { config } from "./config";
 
 // keccak256("")
 export const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
@@ -29,4 +32,10 @@ export const isTokenERC20 = (token: Token): token is TokenERC20 => {
 
 export const compressAddress = (a: string, padding: number = 4) => {
   return `${a.slice(0, padding + 2)}...${a.slice(a.length - padding)}`;
+}
+
+export const newBucketContract = (address: string) => {
+  const bucketAbi = Bucket.abi as AbiItem[];
+  const bucket = new config.web3!.eth.Contract(bucketAbi, address);
+  return bucket;
 }

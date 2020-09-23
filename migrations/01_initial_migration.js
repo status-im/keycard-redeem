@@ -9,6 +9,6 @@ module.exports = function(deployer, network) {
   deployer.deploy(ERC20BucketFactory);
 
   if (network === "development") {
-    deployer.deploy(TestToken, "TEST", 18);
+    deployer.deploy(TestToken, "Dev Test Token", "DTT", 18);
   }
 };

@@ -1,11 +1,10 @@
 import { RootState } from '../reducers';
 import { config } from "../config";
 import { Dispatch } from 'redux';
-import { newBucketContract } from "./redeemable";
 import { sha3 } from "web3-utils";
 import { recoverTypedSignature } from 'eth-sig-util';
 import { Web3Type } from "../actions/web3";
-import { KECCAK_EMPTY_STRING } from '../utils';
+import { KECCAK_EMPTY_STRING, newBucketContract} from '../utils';
 import { debug } from "./debug";
 
 interface RedeemMessage {

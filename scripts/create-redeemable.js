@@ -25,8 +25,7 @@ const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b
 const KECCAK_EMPTY_STRING2 = web3.utils.sha3(KECCAK_EMPTY_STRING);
 
 async function deployFactory() {
-  let code = "0x" + BucketFactoryCode;
-  let methodCall = BucketFactory.deploy({data: code});
+  let methodCall = BucketFactory.deploy({data: BucketFactoryCode});
   let receipt = await account.sendMethod(methodCall, null);
   return receipt.contractAddress;
 }
@@ -191,7 +190,7 @@ async function run() {
     for (let keycard of keycards) {
       const create = argv["nft"] ? transferNFT : createRedeemable;
       await create(keycard);
-      console.log(`http://test-pn.keycard.cash/redeem/#/buckets/${bucket}/redeemables/${keycard.keycard}`)
+      console.log(`http://localhost:3000/redeem/#/buckets/${bucket}/redeemables/${keycard.keycard}`)
     }
   } else if (!hasDoneSomething) {
     console.error("the --file option must be specified");

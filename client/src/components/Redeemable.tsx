@@ -40,7 +40,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 
 
-const buckerErrorMessage = (error: RedeemableErrors): string => {
+const bucketErrorMessage = (error: RedeemableErrors): string => {
   switch (error.type) {
     case ERROR_LOADING_REDEEMABLE:
       return "couldn't load redeemable";
@@ -116,7 +116,7 @@ export default function(ownProps: any) {
 
   if (props.error) {
     return <div className={classNames({ paper: true, error: true })}>
-      {buckerErrorMessage(props.error)}
+      {bucketErrorMessage(props.error)}
     </div>;
   }
 

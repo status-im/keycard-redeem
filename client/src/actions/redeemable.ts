@@ -2,14 +2,16 @@ import { RootState } from '../reducers';
 import ERC20BucketFactory from '../contracts/ERC20BucketFactory.json';
 import NFTBucketFactory from '../contracts/NFTBucketFactory.json';
 import ERC20Bucket from '../contracts/ERC20Bucket.json';
-import Bucket from '../contracts/Bucket.json';
 import IERC20Detailed from '../contracts/IERC20Detailed.json';
 import IERC721Metadata from '../contracts/IERC721Metadata.json';
 import { config } from "../config";
 import { Dispatch } from 'redux';
-import { ZERO_ADDRESS } from "../utils";
-import { debug } from "./debug";
 import { AbiItem } from "web3-utils";
+import {
+  ZERO_ADDRESS ,
+  newBucketContract,
+} from "../utils";
+import { debug } from "./debug";
 
 interface ContractSpecs {
   networks: {
@@ -177,18 +179,6 @@ export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, met
   recipient,
   metadata,
 });
-
-export const newBucketContract = (address: string) => {
-  const bucketAbi = Bucket.abi as AbiItem[];
-  const bucket = new config.web3!.eth.Contract(bucketAbi, address);
-  return bucket;
-}
-
-export const newERC20BucketContract = (address: string) => {
-  const bucketAbi = ERC20Bucket.abi as AbiItem[];
-  const bucket = new config.web3!.eth.Contract(bucketAbi, address);
-  return bucket;
-}
 
 export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {

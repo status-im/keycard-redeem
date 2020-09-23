@@ -8,4 +8,14 @@ export const config: Config = {
   web3: undefined
 };
 
+export const recipientBucketsPath = "/recipients/:recipientAddress/buckets";
 export const redeemablePath = "/buckets/:bucketAddress/redeemables/:recipientAddress";
+
+export const bucketsAddresses = (): Array<string> => {
+  const s = process.env.REACT_APP_BUCKETS;
+  if (s === undefined) {
+    return [];
+  }
+
+  return s.split(",").map((a) => a.trim());
+}

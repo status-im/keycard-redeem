@@ -6,10 +6,12 @@ import "./StandardToken.sol";
  * @notice ERC20Token for test scripts, can be minted by anyone.
  */
 contract TestToken is StandardToken {
+  string private _name;
   string private _symbol;
   uint256 private _decimals;
 
-  constructor(string memory symbol, uint256 decimals) public {
+  constructor(string memory name, string memory symbol, uint256 decimals) public {
+    _name = name;
     _symbol = symbol;
     _decimals = decimals;
   }
@@ -18,6 +20,10 @@ contract TestToken is StandardToken {
   function() external {
     uint256 amount = 5000;
     mint(amount * uint256(10)**_decimals);
+  }
+
+  function name() public view returns (string memory) {
+    return _name;
   }
 
   function symbol() public view returns (string memory) {

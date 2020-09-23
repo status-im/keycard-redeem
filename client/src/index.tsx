@@ -12,7 +12,11 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Home from './components/Home';
 import Redeemable from './components/Redeemable';
-import { redeemablePath } from './config';
+import RecipientBuckets from './components/RecipientBuckets';
+import {
+  recipientBucketsPath,
+  redeemablePath,
+} from './config';
 
 const logger: Middleware = ({ getState }: MiddlewareAPI) => (next: Dispatch) => action => {
   console.log('dispatch', action);
@@ -49,6 +53,7 @@ ReactDOM.render(
         <ConnectedRouter history={history}>
           <Switch>
             <Route exact path="/"><Home /></Route>
+            <Route exact path={recipientBucketsPath}><RecipientBuckets /></Route>
             <Route exact path={redeemablePath}><Redeemable /></Route>
             <Route render={() => "page not found"} />
           </Switch>
