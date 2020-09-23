@@ -11,4 +11,5 @@ embarkArtifacts
 node_modules
 yarn-error.log
 /src/react-app-env.d.ts
-/scripts/contracts
+/client/src/react-app-env.d.ts
+/client/src/contracts

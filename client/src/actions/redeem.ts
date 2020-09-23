@@ -95,6 +95,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
     }
 
     dispatch(redeeming());
+
     const state = getState();
     const web3Type = state.web3.type;
 
@@ -128,7 +129,6 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
       }
 
       dispatch<any>(sendTransaction(account, bucket, bucketAddress, message, sig));
-
     }).catch((err: any) => {
       console.error("sign redeem error reason:", err.reason);
       console.error("sign redeem error:", err);
@@ -202,8 +202,7 @@ const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> =>
 
 const signWithKeycard = (data: any): Promise<SignRedeemResponse> => {
   return new Promise((resolve, reject) => {
-    (window as any).ethereum.send("keycard_signTypedData", JSON.stringify(data)).then((resp: any) => {
-      const sig = resp.result;
+    (window as any).ethereum.send("keycard_signTypedData", JSON.stringify(data)).then((sig: any) => {
       const signer = recoverTypedSignature({
         data,
         sig
@@ -219,6 +218,7 @@ const signWithKeycard = (data: any): Promise<SignRedeemResponse> => {
 const sendTransaction = (account: string, bucket: any, bucketAddress: string, message: RedeemMessage, sig: string) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.relayerURI().call().then((uri: string) => {
+      dispatch(debug(`relayer URI: ${uri}`));
       if (uri === "") {
         dispatch<any>(sendEthTransaction(account, bucket, message, sig));
       } else {
