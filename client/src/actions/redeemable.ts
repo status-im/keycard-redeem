@@ -1,14 +1,27 @@
 import { RootState } from '../reducers';
-import ERC20BucketFactory from '../embarkArtifacts/contracts/ERC20BucketFactory';
-import NFTBucketFactory from '../embarkArtifacts/contracts/NFTBucketFactory';
-import ERC20Bucket from '../embarkArtifacts/contracts/ERC20Bucket';
-import Bucket from '../embarkArtifacts/contracts/Bucket';
-import IERC20Detailed from '../embarkArtifacts/contracts/IERC20Detailed';
-import IERC721Metadata from '../embarkArtifacts/contracts/IERC721Metadata';
+import ERC20BucketFactory from '../contracts/ERC20BucketFactory.json';
+import NFTBucketFactory from '../contracts/NFTBucketFactory.json';
+import ERC20Bucket from '../contracts/ERC20Bucket.json';
+import Bucket from '../contracts/Bucket.json';
+import IERC20Detailed from '../contracts/IERC20Detailed.json';
+import IERC721Metadata from '../contracts/IERC721Metadata.json';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 import { ZERO_ADDRESS } from "../utils";
 import { debug } from "./debug";
+import { AbiItem } from "web3-utils";
+
+interface ContractSpecs {
+  networks: {
+    [id: string]: {
+      address: string
+    }
+  }
+}
+
+const contractAddress = (specs: ContractSpecs, networkID: string | number): string => {
+  return specs.networks[networkID.toString()].address;
+}
 
 export const ERROR_REDEEMABLE_NOT_FOUND = "ERROR_REDEEMABLE_NOT_FOUND";
 export interface ErrRedeemableNotFound {
@@ -166,21 +179,22 @@ export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, met
 });
 
 export const newBucketContract = (address: string) => {
-  const bucketAbi = Bucket.options.jsonInterface;
+  const bucketAbi = Bucket.abi as AbiItem[];
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
 }
 
 export const newERC20BucketContract = (address: string) => {
-  const bucketAbi = ERC20Bucket.options.jsonInterface;
+  const bucketAbi = ERC20Bucket.abi as AbiItem[];
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
 }
 
 export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
-    dispatch(debug(`erc20 factory address: ${ERC20BucketFactory.address}`));
-    dispatch(debug(`nft factory address: ${NFTBucketFactory.address}`));
+    const networkID = getState().web3.networkID!;
+    dispatch(debug(`erc20 factory address: ${contractAddress(ERC20BucketFactory, networkID)}`));
+    dispatch(debug(`nft factory address: ${contractAddress(NFTBucketFactory, networkID)}`));
     dispatch(debug(`bucket address: ${bucketAddress}`));
     dispatch(debug(`recipient address: ${recipientAddress}`));
     dispatch(loadingRedeemable(bucketAddress, recipientAddress));
@@ -232,7 +246,7 @@ export const loadToken = (bucket: any, data: string, recipient: string) => {
 export const loadERC20Token = (bucket: any, data: string, recipient: string) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.tokenAddress().call().then(async (address: string) => {
-      const erc20Abi = IERC20Detailed.options.jsonInterface;
+      const erc20Abi = IERC20Detailed.abi as AbiItem[];
       const erc20 = new config.web3!.eth.Contract(erc20Abi, address);
       dispatch(loadingToken(address));
 
@@ -251,7 +265,7 @@ export const loadERC20Token = (bucket: any, data: string, recipient: string) => 
 export const loadNFTToken = (bucket: any, data: string, recipient: string) => {
   return (dispatch: Dispatch, getState: () => RootState) => {
     bucket.methods.tokenAddress().call().then(async (address: string) => {
-      const nftAbi = IERC721Metadata.options.jsonInterface;
+      const nftAbi = IERC721Metadata.abi as AbiItem[];
       const nft = new config.web3!.eth.Contract(nftAbi, address);
       dispatch(loadingToken(address));
 

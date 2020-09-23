@@ -8,6 +8,9 @@
     "express": "^4.17.1",
     "minimist": "^1.2.5",
     "morgan": "^1.10.0",
+    "solc": "0.5.16",
     "web3": "^1.2.7"
+  },
+  "devDependencies": {
   }
 }
