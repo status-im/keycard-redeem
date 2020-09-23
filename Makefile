@@ -1,7 +1,5 @@
 -include .env
 
-# CONTRACTS_PATH="./contracts"
-RELAYER_CONTRACTS_PATH=$$(realpath ./scripts/contracts-build)
 RELAYER_DOCKER_FILE="./_assets/Dockerfile.relayer"
 RELAYER_DOCKER_IMAGE="redeem-relayer"
 RELAYER_DOCKER_CONTAINER_NAME="redeem-relayer"
