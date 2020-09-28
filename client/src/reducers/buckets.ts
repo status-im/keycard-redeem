@@ -1,6 +1,7 @@
 import {
   BucketsActions,
   BUCKETS_LOADING,
+  BUCKETS_UNLOADED,
   BUCKETS_LOADING_BUCKET,
   BUCKETS_REDEEMABLE_TOKEN_ADDRESS_LOADED,
   BUCKETS_REDEEMABLE_TOKEN_TYPE_LOADED,
@@ -59,6 +60,14 @@ export const bucketsReducer = (state: BucketsState = initialState, action: Bucke
         recipientAddress: action.recipientAddress,
         loading: true,
       };
+    }
+
+    case BUCKETS_UNLOADED: {
+      if (action.recipientAddress !== state.recipientAddress) {
+        return state;
+      }
+
+      return initialState;
     }
 
     case BUCKETS_LOADING_BUCKET: {

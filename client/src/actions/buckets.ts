@@ -8,10 +8,17 @@ import IERC20Detailed from '../contracts/IERC20Detailed.json';
 import { AbiItem } from "web3-utils";
 import { config } from "../config";
 import { TokenDetails, ERC20Details } from "../reducers/buckets";
+import { debug } from "./debug";
 
 export const BUCKETS_LOADING = "BUCKETS_LOADING";
 export interface BucketsLoadingAction {
   type: typeof BUCKETS_LOADING
+  recipientAddress: string
+}
+
+export const BUCKETS_UNLOADED = "BUCKETS_UNLOADED";
+export interface BucketsUnloadedAction {
+  type: typeof BUCKETS_UNLOADED
   recipientAddress: string
 }
 
@@ -48,6 +55,7 @@ export interface BucketsRedeemableTokenDetailsLoadedAction {
 
 export type BucketsActions =
   BucketsLoadingAction |
+  BucketsUnloadedAction |
   BucketsLoadingBucketAction |
   BucketsRedeemableTokenAddressLoadedAction |
   BucketsRedeemableTokenTypeLoadedAction |
@@ -55,6 +63,11 @@ export type BucketsActions =
 
 export const loadingBuckets = (recipientAddress: string): BucketsLoadingAction => ({
   type: BUCKETS_LOADING,
+  recipientAddress,
+});
+
+export const unloadBuckets = (recipientAddress: string): BucketsUnloadedAction => ({
+  type: BUCKETS_UNLOADED,
   recipientAddress,
 });
 
@@ -108,9 +121,13 @@ const loadBucket = (recipientAddress: string, bucketAddress: string) => {
     const tokenAddress = await bucket.methods.tokenAddress().call();
     dispatch(tokenAddressLoaded(recipientAddress, bucketAddress, tokenAddress));
 
-    //FIXME: catch possible error
-    const tokenDetails = await loadERC20Token(tokenAddress);
-    dispatch(tokenDetailsLoaded(recipientAddress, bucketAddress, tokenDetails));
+    try {
+      const tokenDetails = await loadERC20Token(tokenAddress);
+      dispatch(tokenDetailsLoaded(recipientAddress, bucketAddress, tokenDetails));
+    } catch (e) {
+      dispatch(debug(`error loading token details (${tokenAddress}) ${e}`));
+      //FIXME: dispatch error
+    }
   }
 }
 

@@ -6,12 +6,14 @@ import {
   useSelector,
   useDispatch,
 } from 'react-redux';
-import { recipientBucketsPath } from '../config';
-import { loadBuckets } from "../actions/buckets";
+import { recipientBucketsPath, buildRedeemablePath } from '../config';
+import { loadBuckets, unloadBuckets } from "../actions/buckets";
 import { ERC20Details } from "../reducers/buckets";
+import { Link } from "react-router-dom";
 
 interface BuckestListItemProps {
   bucketAddress: string
+  recipientAddress: string
 }
 
 const BuckestListItem = (ownProps: BuckestListItemProps) => {
@@ -23,6 +25,7 @@ const BuckestListItem = (ownProps: BuckestListItemProps) => {
 
     return {
       bucketAddress: ownProps.bucketAddress,
+      recipientAddress: ownProps.recipientAddress,
       loading: redeemable.loading,
       tokenAddress: redeemable.tokenAddress,
       tokenType: redeemable.tokenType,
@@ -46,7 +49,9 @@ const BuckestListItem = (ownProps: BuckestListItemProps) => {
       Symbol: {props.tokenDetails.symbol}
       <br />
       Name: {props.tokenDetails.name}
+      <br />
     </>}
+    <Link to={buildRedeemablePath(props.bucketAddress, props.recipientAddress)}>DETAILS</Link>
     <hr />
   </div>;
 }
@@ -79,13 +84,17 @@ export default function(ownProps: any) {
   useEffect(() => {
     console.log("loading buckets")
     dispatch(loadBuckets(recipientAddress));
+
+    return () => {
+      dispatch(unloadBuckets(recipientAddress));
+    }
   }, [dispatch, recipientAddress]); // FIXME: unload buckets
 
   return <div>
     <div>buckets for {recipientAddress}</div>
     <ul>
       {props.buckets.map(bucketAddress => <li key={bucketAddress}>
-        <BuckestListItem bucketAddress={bucketAddress} />
+        <BuckestListItem bucketAddress={bucketAddress} recipientAddress={recipientAddress} />
       </li>)}
     </ul>
   </div>;

@@ -11,6 +11,10 @@ export const config: Config = {
 export const recipientBucketsPath = "/recipients/:recipientAddress/buckets";
 export const redeemablePath = "/buckets/:bucketAddress/redeemables/:recipientAddress";
 
+export const buildRedeemablePath = (bucketAddress: string, recipientAddress: string) => {
+  return `/buckets/${bucketAddress}/redeemables/${recipientAddress}`;
+}
+
 export const bucketsAddresses = (): Array<string> => {
   const s = process.env.REACT_APP_BUCKETS;
   if (s === undefined) {
