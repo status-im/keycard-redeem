@@ -14,7 +14,7 @@ const initialState: DebugState = {
 export const debugReducer = (state: DebugState = initialState, action: DebugActions): DebugState => {
   switch (action.type) {
     case DEBUG_WRITTEN: {
-      console.error(action.text);
+      console.log(action.text);
       return {
         ...state,
         lines: [

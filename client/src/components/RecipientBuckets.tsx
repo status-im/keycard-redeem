@@ -8,7 +8,6 @@ import {
 } from 'react-redux';
 import { recipientBucketsPath, buildRedeemablePath } from '../config';
 import { loadBuckets, unloadBuckets } from "../actions/buckets";
-import { ERC20Details } from "../reducers/buckets";
 import { Link } from "react-router-dom";
 
 interface BuckestListItemProps {

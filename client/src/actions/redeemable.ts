@@ -1,7 +1,6 @@
 import { RootState } from '../reducers';
 import ERC20BucketFactory from '../contracts/ERC20BucketFactory.json';
 import NFTBucketFactory from '../contracts/NFTBucketFactory.json';
-import ERC20Bucket from '../contracts/ERC20Bucket.json';
 import IERC20Detailed from '../contracts/IERC20Detailed.json';
 import IERC721Metadata from '../contracts/IERC721Metadata.json';
 import { config } from "../config";

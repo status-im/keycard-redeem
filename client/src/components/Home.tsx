@@ -4,8 +4,6 @@ import {
 } from 'react-redux';
 
 export default function() {
-  const dispatch = useDispatch();
-
   return <>
   </>;
 }

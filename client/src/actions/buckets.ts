@@ -1,7 +1,6 @@
 import { RootState } from '../reducers';
 import { Dispatch } from 'redux';
 import { bucketsAddresses } from "../config";
-import Bucket from '../contracts/Bucket.json';
 import { newBucketContract } from "../utils";
 import { TokenType } from "../reducers/buckets";
 import IERC20Detailed from '../contracts/IERC20Detailed.json';
