@@ -2,9 +2,14 @@ import { RootState } from '../reducers';
 import { config } from "../config";
 import { Dispatch } from 'redux';
 import { sha3 } from "web3-utils";
-import { recoverTypedSignature } from 'eth-sig-util';
 import { Web3Type } from "../actions/web3";
-import { KECCAK_EMPTY_STRING, newBucketContract} from '../utils';
+import {
+  KECCAK_EMPTY_STRING,
+  newBucketContract,
+  SignRedeemResponse,
+  signTypedDataWithKeycard,
+  signTypedDataWithWeb3,
+} from '../utils';
 import { debug } from "./debug";
 
 interface RedeemMessage {
@@ -12,11 +17,6 @@ interface RedeemMessage {
   code: string
   blockNumber:  number
   blockHash:  string
-}
-
-interface SignRedeemResponse {
-  sig: string
-  signer: string
 }
 
 export const ERROR_REDEEMING = "ERROR_REDEEMING";
@@ -96,6 +96,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
     dispatch(redeeming());
 
     const state = getState();
+    const chainID = state.web3.chainID!;
     const web3Type = state.web3.type;
 
     const bucket = newBucketContract(bucketAddress);
@@ -118,7 +119,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
     const domainName = isERC20 ? "KeycardERC20Bucket" : "KeycardNFTBucket";
     //FIXME: is signer needed?
     dispatch(debug("signing redeem"));
-    signRedeem(web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, signer }: SignRedeemResponse) => {
+    signRedeem(chainID, web3Type, bucketAddress, state.web3.account!, message, domainName).then(async ({ sig, signer }: SignRedeemResponse) => {
       dispatch(debug(`signature: ${sig}, signer: ${signer}`));
       const recipient = state.redeemable.recipient!;
       if (signer.toLowerCase() !== recipient.toLowerCase()) {
@@ -136,9 +137,7 @@ export const redeem = (bucketAddress: string, recipientAddress: string, cleanCod
   }
 }
 
-async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage, domainName: string): Promise<SignRedeemResponse> {
-  const chainId = await config.web3!.eth.net.getId();
-
+async function signRedeem(chainID: number, web3Type: Web3Type, contractAddress: string, signer: string, message: RedeemMessage, domainName: string): Promise<SignRedeemResponse> {
   const domain = [
     { name: "name", type: "string" },
     { name: "version", type: "string" },
@@ -156,7 +155,7 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   const domainData = {
     name: domainName,
     version: "1",
-    chainId: chainId,
+    chainId: chainID,
     verifyingContract: contractAddress
   };
 
@@ -171,46 +170,10 @@ async function signRedeem(web3Type: Web3Type, contractAddress: string, signer: s
   };
 
   if (web3Type === Web3Type.Status) {
-    return signWithKeycard(data);
+    return signTypedDataWithKeycard(data);
   } else {
-    return signWithWeb3(signer, data);
+    return signTypedDataWithWeb3(signer, data);
   }
-}
-
-const signWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> => {
-  return new Promise((resolve, reject) => {
-    (window as any).ethereum.sendAsync({
-      method: "eth_signTypedData_v3",
-      params: [signer, JSON.stringify(data)],
-      from: signer,
-    }, (err: string, resp: any) => {
-      if (err) {
-        reject(err);
-      } else {
-        const sig = resp.result;
-        const signer = recoverTypedSignature({
-          data,
-          sig
-        });
-
-        resolve({ sig, signer });
-      }
-    })
-  });
-}
-
-const signWithKeycard = (data: any): Promise<SignRedeemResponse> => {
-  return new Promise((resolve, reject) => {
-    (window as any).ethereum.send("keycard_signTypedData", JSON.stringify(data)).then((sig: any) => {
-      const signer = recoverTypedSignature({
-        data,
-        sig
-      });
-      resolve({ sig, signer });
-    }).catch((err: string) => {
-      reject(err);
-    })
-  });
 }
 
 //FIXME: fix bucket contract type

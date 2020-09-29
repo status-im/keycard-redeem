@@ -11,6 +11,10 @@ export const config: Config = {
 export const recipientBucketsPath = "/recipients/:recipientAddress/buckets";
 export const redeemablePath = "/buckets/:bucketAddress/redeemables/:recipientAddress";
 
+export const buildRecipientBucketsPath = (recipientAddress: string) => {
+  return `/recipients/${recipientAddress}/buckets`;
+}
+
 export const buildRedeemablePath = (bucketAddress: string, recipientAddress: string) => {
   return `/buckets/${bucketAddress}/redeemables/${recipientAddress}`;
 }

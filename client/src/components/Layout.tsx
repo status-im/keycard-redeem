@@ -10,12 +10,11 @@ import "../styles/Layout.scss";
 export default function(ownProps: any) {
   const props = useSelector((state: RootState) => {
     return {
-      initialized: state.web3.networkID,
+      initialized: state.web3.networkID !== undefined,
       networkID: state.web3.networkID,
       error: state.web3.error,
       account: state.web3.account,
       type: state.web3.type,
-      sidebarOpen: state.layout.sidebarOpen,
     }
   }, shallowEqual);
 

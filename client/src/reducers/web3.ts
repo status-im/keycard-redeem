@@ -10,6 +10,7 @@ import {
 export interface Web3State {
   initialized: boolean
   networkID: number | undefined
+  chainID: number | undefined
   error: string | undefined
   account: string | undefined
   type: Web3Type
@@ -18,6 +19,7 @@ export interface Web3State {
 const initialState: Web3State = {
   initialized: false,
   networkID: undefined,
+  chainID: undefined,
   error: undefined,
   account: undefined,
   type: Web3Type.None,
@@ -44,6 +46,7 @@ export const web3Reducer = (state: Web3State = initialState, action: Web3Actions
       return {
         ...state,
         networkID: action.networkID,
+        chainID: action.chainID,
       }
     }
 

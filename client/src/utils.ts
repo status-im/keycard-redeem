@@ -7,6 +7,8 @@ import {
 import { AbiItem } from "web3-utils";
 import Bucket from './contracts/Bucket.json';
 import { config } from "./config";
+import { recoverTypedSignature } from 'eth-sig-util';
+import { Web3Type } from "./actions/web3";
 
 // keccak256("")
 export const KECCAK_EMPTY_STRING  = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
@@ -38,4 +40,96 @@ export const newBucketContract = (address: string) => {
   const bucketAbi = Bucket.abi as AbiItem[];
   const bucket = new config.web3!.eth.Contract(bucketAbi, address);
   return bucket;
+}
+
+export interface SignRedeemResponse {
+  sig: string
+  signer: string
+}
+
+export const signTypedDataWithKeycard = (data: any): Promise<SignRedeemResponse> => {
+  return new Promise((resolve, reject) => {
+    (window as any).ethereum.request({
+      method: "keycard_signTypedData",
+      params: JSON.stringify(data)
+    }).then((sig: any) => {
+      const signer = recoverTypedSignature({
+        data,
+        sig
+      });
+      resolve({ sig, signer });
+    }).catch((err: string) => {
+      alert("err")
+      reject(err);
+    })
+  });
+}
+
+export const signTypedDataWithWeb3 = (signer: string, data: any): Promise<SignRedeemResponse> => {
+  return new Promise((resolve, reject) => {
+    (window as any).ethereum.sendAsync({
+      method: "eth_signTypedData_v3",
+      params: [signer, JSON.stringify(data)],
+      from: signer,
+    }, (err: string, resp: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        const sig = resp.result;
+        const signer = recoverTypedSignature({
+          data,
+          sig
+        });
+
+        resolve({ sig, signer });
+      }
+    })
+  });
+}
+
+//FIXME: use a proper message for authentication instead of KeycardERC20Bucket
+export const signTypedLogin = async (chainID: number, signer: string, web3Type: Web3Type): Promise<SignRedeemResponse> => {
+  const message = {
+    blockNumber: 1,
+    blockHash: "0x0000000000000000000000000000000000000000",
+    code: "0x0000000000000000000000000000000000000000",
+    receiver: signer,
+  }
+
+  const domain = [
+    { name: "name", type: "string" },
+    { name: "version", type: "string" },
+    { name: "chainId", type: "uint256" },
+    { name: "verifyingContract", type: "address" }
+  ];
+
+  const redeem = [
+    { name: "blockNumber", type: "uint256" },
+    { name: "blockHash", type: "bytes32" },
+    { name: "receiver", type: "address" },
+    { name: "code", type: "bytes32" },
+  ];
+
+  const domainData = {
+    name: "KeycardERC20Bucket",
+    version: "1",
+    chainId: chainID,
+    verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+  };
+
+  const data = {
+    types: {
+      EIP712Domain: domain,
+      Redeem: redeem,
+    },
+    primaryType: "Redeem",
+    domain: domainData,
+    message: message
+  };
+
+  if (web3Type === Web3Type.Status) {
+    return signTypedDataWithKeycard(data);
+  } else {
+    return signTypedDataWithWeb3(signer, data);
+  }
 }

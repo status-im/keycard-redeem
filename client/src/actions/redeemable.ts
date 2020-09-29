@@ -182,8 +182,9 @@ export const tokenMetadataLoaded = (tokenAddress: string, recipient: string, met
 export const loadRedeemable = (bucketAddress: string, recipientAddress: string) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const networkID = getState().web3.networkID!;
-    dispatch(debug(`erc20 factory address: ${contractAddress(ERC20BucketFactory, networkID)}`));
-    dispatch(debug(`nft factory address: ${contractAddress(NFTBucketFactory, networkID)}`));
+    // FIXME: how can we set the address if deployed via make
+    // dispatch(debug(`erc20 factory address: ${contractAddress(ERC20BucketFactory, networkID)}`));
+    // dispatch(debug(`nft factory address: ${contractAddress(NFTBucketFactory, networkID)}`));
     dispatch(debug(`bucket address: ${bucketAddress}`));
     dispatch(debug(`recipient address: ${recipientAddress}`));
     dispatch(loadingRedeemable(bucketAddress, recipientAddress));

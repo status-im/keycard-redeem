@@ -6,15 +6,17 @@ import {
 import { RootState } from '../reducers';
 import { debug } from "./debug";
 
-export const VALID_NETWORK_NAME = "Ganache";
-export const VALID_NETWORK_ID = 5777;
+// export const VALID_NETWORK_NAME = "Ganache";
+// export const VALID_NETWORK_ID = 5777;
 
-// export const VALID_NETWORK_NAME = "Ropsten";
-// export const VALID_NETWORK_ID = 3;
+export const VALID_NETWORK_NAME = "Ropsten";
+export const VALID_NETWORK_ID = 3;
 
 // export const VALID_NETWORK_NAME = "Goerli";
 // export const VALID_NETWORK_ID = 5;
-export const LOCAL_NETWORK_ID = 1337;
+
+export const LOCAL_NETWORK_IDS = [1337, 5777];
+export const VALID_NETWORK_IDS = [VALID_NETWORK_ID, ...LOCAL_NETWORK_IDS];
 
 export enum Web3Type {
   None,
@@ -39,6 +41,7 @@ export const WEB3_NETWORK_ID_LOADED = "WEB3_NETWORK_ID_LOADED";
 export interface Web3NetworkIDLoadedAction {
   type: typeof WEB3_NETWORK_ID_LOADED
   networkID: number
+  chainID: number
 }
 
 export const WEB3_ACCOUNT_LOADED = "WEB3_ACCOUNT_LOADED";
@@ -59,9 +62,10 @@ export const web3Initialized = (t: Web3Type): Web3Actions => ({
   web3Type: t,
 })
 
-export const web3NetworkIDLoaded = (id: number): Web3Actions => ({
+export const web3NetworkIDLoaded = (networkID: number, chainID: number): Web3Actions => ({
   type: WEB3_NETWORK_ID_LOADED,
-  networkID: id,
+  networkID,
+  chainID,
 });
 
 export const web3Error = (error: string): Web3Actions => ({
@@ -76,42 +80,25 @@ export const accountLoaded = (account: string): Web3Actions => ({
 
 export const initializeWeb3 = () => {
   const w = window as any;
-  return (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch, getState: () => RootState) => {
     if (w.ethereum) {
       config.web3 = new Web3(w.ethereum);
       (config.web3! as any).eth.handleRevert = true;
 
       w.ethereum.enable()
         .then(() => {
-          const t: Web3Type = w.ethereum.isStatus ? Web3Type.Status : Web3Type.Generic;
-          dispatch(web3Initialized(t));
-          config.web3!.eth.net.getId().then((id: number) => {
-            if (id !== VALID_NETWORK_ID && id !== LOCAL_NETWORK_ID) {
-              dispatch(web3Error(`wrong network, please connect to ${VALID_NETWORK_NAME}`));
-              return;
-            }
-
-            dispatch(debug(`network id: ${id}`))
-            dispatch(web3NetworkIDLoaded(id))
+          checkNetworkAndChainId().then((resp: any) => {
+            dispatch(debug(`network id: ${resp.networkID}`))
+            dispatch(debug(`chain id: ${resp.chainID}`))
+            dispatch(web3NetworkIDLoaded(resp.networkID, resp.chainID))
+            dispatch(web3Initialized(resp.type));
             dispatch<any>(loadAddress());
-          });
+          })
         })
         .catch((err: string) => {
-          //FIXME: handle error
-          console.log("error", err)
+          console.error("web3 error", err)
+          dispatch(web3Error(err));
         });
-    } else if (config.web3) {
-      const t: Web3Type = w.ethereum.isStatus ? Web3Type.Status : Web3Type.Generic;
-      dispatch(web3Initialized(t));
-      config.web3!.eth.net.getId().then((id: number) => {
-        dispatch(debug(`network id: ${id}`))
-        dispatch(web3NetworkIDLoaded(id))
-        dispatch<any>(loadAddress());
-      })
-      .catch((err: string) => {
-        //FIXME: handle error
-        console.log("error", err)
-      });
     } else {
       dispatch(web3Error("web3 not supported"));
     }
@@ -125,4 +112,37 @@ const loadAddress = () => {
       dispatch(accountLoaded(accounts[0]));
     });
   };
+}
+
+const checkNetworkAndChainId = async () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const networkID = await config.web3!.eth.net.getId();
+      const type = (window as any).ethereum.isStatus ? Web3Type.Status : Web3Type.Generic;
+
+      if (!VALID_NETWORK_IDS.includes(networkID)) {
+        reject(`wrong network, please connect to ${VALID_NETWORK_NAME}`);
+        return;
+      }
+
+      let chainID;
+
+      //FIXME: status should fix the getChainId error
+      if (type === Web3Type.Status) {
+        chainID = networkID;
+      } else if (LOCAL_NETWORK_IDS.includes(networkID)) {
+        chainID = 1;
+      } else {
+        chainID = await config.web3!.eth.getChainId();
+      }
+
+      resolve({
+        type,
+        networkID,
+        chainID,
+      });
+    } catch(e) {
+      reject(e);
+    }
+  });
 }
