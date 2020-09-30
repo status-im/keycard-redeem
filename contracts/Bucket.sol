@@ -1,6 +1,8 @@
 pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/cryptography/ECDSA.sol";
+
 abstract contract Bucket {
   bool initialized;
   address payable public owner;
@@ -122,31 +124,13 @@ abstract contract Bucket {
   }
 
   function recoverSigner(bytes32 _domainSeparator, Redeem memory _redeem, bytes memory _sig) internal pure returns(address) {
-    require(_sig.length == 65, "bad signature length");
-
-    bytes32 r;
-    bytes32 s;
-    uint8 v;
-
-    assembly {
-      r := mload(add(_sig, 32))
-      s := mload(add(_sig, 64))
-      v := byte(0, mload(add(_sig, 96)))
-    }
-
-    if (v < 27) {
-      v += 27;
-    }
-
-    require(v == 27 || v == 28, "signature version doesn't match");
-
     bytes32 digest = keccak256(abi.encodePacked(
         "\x19\x01",
         _domainSeparator,
         hashRedeem(_redeem)
     ));
 
-    return ecrecover(digest, v, r, s);
+    return ECDSA.recover(digest, _sig);
   }
 
   function setRelayerURI(string calldata uri) external onlyOwner {

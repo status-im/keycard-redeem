@@ -58,6 +58,7 @@ async function signRedeem(contractAddress, signer, message) {
       if (error) {
         return reject(error);
       }
+
       resolve(res.result);
     });
   });
