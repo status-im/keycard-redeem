@@ -1,4 +1,3 @@
-const EmbarkJS = artifacts.require('EmbarkJS');
 const TestNFT = artifacts.require('TestNFT');
 const _NFTBucket = artifacts.require('NFTBucket');
 const NFTBucketFactory = artifacts.require('NFTBucketFactory');

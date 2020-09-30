@@ -1,6 +1,5 @@
-const EmbarkJS = artifacts.require('EmbarkJS');
 const TestToken = artifacts.require('TestToken');
-const _ERC20Bucket = artifacts.require('ERC20Bucket');
+const ERC20Bucket = artifacts.require('ERC20Bucket');
 const ERC20BucketFactory = artifacts.require('ERC20BucketFactory');
 
 const TOTAL_SUPPLY = 10000;
@@ -10,36 +9,6 @@ const NOW = Math.round(new Date().getTime() / 1000);
 const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
 const MAX_TX_DELAY_BLOCKS = 10;
-
-let shop,
-    user,
-    relayer,
-    keycard_1,
-    keycard_2;
-
-config({
-  contracts: {
-    deploy: {
-      "TestToken": {
-        args: ["TEST", 18],
-      },
-      "ERC20Bucket": {
-        args: ["$TestToken", START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS],
-      },
-      "ERC20BucketFactory": {
-        args: [],
-      },
-    }
-  },
-}, (_err, _accounts) => {
-  shop      = _accounts[0];
-  user      = _accounts[1];
-  relayer   = _accounts[2];
-  keycard_1 = _accounts[3];
-  keycard_2 = _accounts[4];
-});
-
-let sendMethod;
 
 async function signRedeem(contractAddress, signer, message) {
   const result = await web3.eth.net.getId();
@@ -79,7 +48,7 @@ async function signRedeem(contractAddress, signer, message) {
   };
 
   return new Promise((resolve, reject) => {
-    sendMethod({
+    web3.currentProvider.send({
       jsonrpc: '2.0',
       id: Date.now().toString().substring(9),
       method: "eth_signTypedData",
@@ -96,7 +65,7 @@ async function signRedeem(contractAddress, signer, message) {
 
 function mineAt(timestamp) {
   return new Promise((resolve, reject) => {
-    sendMethod({
+    web3.currentProvider.send({
       jsonrpc: '2.0',
       method: "evm_mine",
       params: [timestamp],
@@ -110,116 +79,127 @@ function mineAt(timestamp) {
   });
 }
 
-if (assert.match === undefined) {
-  assert.match = (message, pattern) => {
-    assert(pattern.test(message), `${message} doesn't match ${pattern}`);
-  }
-}
+contract("ERC20 buckets", function () {
+  let bucketInstance,
+    factoryInstance,
+    testTokenInstance,
+    shop,
+    user,
+    relayer,
+    keycard_1,
+    keycard_2;
 
-contract("ERC20Bucket", function () {
-  let ERC20Bucket;
+  before(async () => {
+    const accounts = await web3.eth.getAccounts();
+    shop      = accounts[0];
+    user      = accounts[1];
+    relayer   = accounts[2];
+    keycard_1 = accounts[3];
+    keycard_2 = accounts[4];
 
-  sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
+    const deployedTestToken = await TestToken.deployed();
+    testTokenInstance = new web3.eth.Contract(TestToken.abi, deployedTestToken.address);
+  });
 
   it("deploy factory", async () => {
-    // only to test gas
-    const deploy = ERC20BucketFactory.deploy({
-      arguments: []
+    const contract = new web3.eth.Contract(ERC20BucketFactory.abi);
+    const deploy = contract.deploy({ data: ERC20BucketFactory.bytecode });
+    const gas = await deploy.estimateGas();
+    const rec = await deploy.send({
+      from: shop,
+      gas,
     });
 
-    const gas = await deploy.estimateGas();
-    await deploy.send({ gas })
+    factoryInstance = new web3.eth.Contract(ERC20BucketFactory.abi, rec.options.address);
   });
 
   it("deploy bucket", async () => {
-    // only to test gas
-    const deploy = _ERC20Bucket.deploy({
-      arguments: [TestToken._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
+    const instance = new web3.eth.Contract(ERC20Bucket.abi);
+    const deploy = instance.deploy({
+      data: ERC20Bucket.bytecode,
+      arguments: [testTokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
+    });
+    const gas = await deploy.estimateGas();
+    const rec = await deploy.send({
+      from: shop,
+      gas,
     });
 
-    const gas = await deploy.estimateGas();
-    await deploy.send({ gas })
+    bucketInstance = new web3.eth.Contract(ERC20Bucket.abi, rec.options.address);
   });
 
   it("deploy bucket via factory", async () => {
-    const create = ERC20BucketFactory.methods.create(TestToken._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
+    const create = factoryInstance.methods.create(testTokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
       gas: gas,
     });
-
-    const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
-    const jsonInterface = _ERC20Bucket.options.jsonInterface;
-    ERC20Bucket = new EmbarkJS.Blockchain.Contract({
-      abi: jsonInterface,
-      address: bucketAddress,
-    });
   });
 
   it("return correct bucket type", async function () {
-    let bucketType = await ERC20Bucket.methods.bucketType().call();
+    let bucketType = await bucketInstance.methods.bucketType().call();
     assert.equal(parseInt(bucketType), 20);
   });
 
   it("shop buys 100 tokens", async function () {
-    let supply = await TestToken.methods.totalSupply().call();
+    let supply = await testTokenInstance.methods.totalSupply().call();
     assert.equal(parseInt(supply), 0);
 
-    await TestToken.methods.mint(TOTAL_SUPPLY).send({
+    await testTokenInstance.methods.mint(TOTAL_SUPPLY).send({
       from: shop,
     });
 
-    supply = await TestToken.methods.totalSupply().call();
+    supply = await testTokenInstance.methods.totalSupply().call();
     assert.equal(parseInt(supply), TOTAL_SUPPLY);
 
-    let shopBalance = await TestToken.methods.balanceOf(shop).call();
+    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY);
   });
 
   it("add supply", async function() {
-    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
+    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucket balance before is ${bucketBalance} instead of 0`);
 
-    let shopBalance = await TestToken.methods.balanceOf(shop).call();
+    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY, `shop balance before is ${shopBalance} instead of ${TOTAL_SUPPLY}`);
 
-    const transfer = TestToken.methods.transfer(ERC20Bucket._address, TOTAL_SUPPLY);
+    const transfer = testTokenInstance.methods.transfer(bucketInstance.options.address, TOTAL_SUPPLY);
     const transferGas = await transfer.estimateGas();
     await transfer.send({
       from: shop,
       gas: transferGas,
     });
 
-    bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
+    bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), TOTAL_SUPPLY, `bucket balance after is ${bucketBalance} instead of ${TOTAL_SUPPLY}`);
 
-    shopBalance = await TestToken.methods.balanceOf(shop).call();
+    shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), 0, `shop balance after is ${shopBalance} instead of 0`);
 
-    let totalSupply = await ERC20Bucket.methods.totalSupply().call();
+    let totalSupply = await bucketInstance.methods.totalSupply().call();
     assert.equal(parseInt(totalSupply), TOTAL_SUPPLY, `total contract supply is ${totalSupply} instead of ${TOTAL_SUPPLY}`);
 
-    let availableSupply = await ERC20Bucket.methods.availableSupply().call();
+    let availableSupply = await bucketInstance.methods.availableSupply().call();
     assert.equal(parseInt(availableSupply), TOTAL_SUPPLY, `available contract supply is ${availableSupply} instead of ${TOTAL_SUPPLY}`);
   });
 
   async function testCreateRedeemable(keycard, amount) {
-    let initialSupply = await ERC20Bucket.methods.totalSupply().call();
-    let initialAvailableSupply = await ERC20Bucket.methods.availableSupply().call();
+    let initialSupply = await bucketInstance.methods.totalSupply().call();
+    let initialAvailableSupply = await bucketInstance.methods.availableSupply().call();
 
     const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
-    const createRedeemable = ERC20Bucket.methods.createRedeemable(keycard, amount, redeemCodeHash);
+    const createRedeemable = bucketInstance.methods.createRedeemable(keycard, amount, redeemCodeHash);
     const createRedeemableGas = await createRedeemable.estimateGas();
     await createRedeemable.send({
       from: shop,
       gas: createRedeemableGas,
     });
 
-    let totalSupply = await ERC20Bucket.methods.totalSupply().call();
+    let totalSupply = await bucketInstance.methods.totalSupply().call();
     assert.equal(parseInt(totalSupply), parseInt(initialSupply), `totalSupply is ${totalSupply} instead of ${initialSupply}`);
 
-    let availableSupply = await ERC20Bucket.methods.availableSupply().call();
+    let availableSupply = await bucketInstance.methods.availableSupply().call();
     assert.equal(parseInt(availableSupply), parseInt(initialAvailableSupply) - amount);
   }
 
@@ -265,11 +245,11 @@ contract("ERC20Bucket", function () {
   });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
-    let initialBucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
-    let initialUserBalance = await TestToken.methods.balanceOf(user).call();
-    let initialRedeemableSupply = await ERC20Bucket.methods.redeemableSupply().call();
+    let initialBucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    let initialUserBalance = await testTokenInstance.methods.balanceOf(user).call();
+    let initialRedeemableSupply = await bucketInstance.methods.redeemableSupply().call();
 
-    let redeemable = await ERC20Bucket.methods.redeemables(recipient).call();
+    let redeemable = await bucketInstance.methods.redeemables(recipient).call();
     const amount = parseInt(redeemable.data);
 
     const message = {
@@ -279,8 +259,8 @@ contract("ERC20Bucket", function () {
       code: redeemCode,
     };
 
-    const sig = await signRedeem(ERC20Bucket._address, signer, message);
-    const redeem = ERC20Bucket.methods.redeem(message, sig);
+    const sig = await signRedeem(bucketInstance.options.address, signer, message);
+    const redeem = bucketInstance.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     let receipt = await redeem.send({
       from: relayer,
@@ -291,15 +271,15 @@ contract("ERC20Bucket", function () {
     assert.equal(receipt.events.Redeemed.returnValues.data, redeemable.data);
 
     let expectedBucketBalance = parseInt(initialBucketBalance) - amount;
-    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
+    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), expectedBucketBalance, `bucketBalance after redeem should be ${expectedBucketBalance} instead of ${bucketBalance}`);
 
     let expectedUserBalance = parseInt(initialUserBalance + amount);
-    userBalance = await TestToken.methods.balanceOf(user).call();
+    userBalance = await testTokenInstance.methods.balanceOf(user).call();
     assert.equal(parseInt(userBalance), expectedUserBalance, `user`, `userBalance after redeem should be ${expectedUserBalance} instead of ${userBalance}`);
 
     let expectedRedeemableSupply = initialRedeemableSupply - amount;
-    let redeemableSupply = await ERC20Bucket.methods.redeemableSupply().call();
+    let redeemableSupply = await bucketInstance.methods.redeemableSupply().call();
     assert.equal(parseInt(redeemableSupply), expectedRedeemableSupply, `redeemableSupply after redeem should be ${expectedRedeemableSupply} instead of ${redeemableSupply}`);
   }
 
@@ -389,18 +369,18 @@ contract("ERC20Bucket", function () {
   });
 
   async function testKill() {
-    let initialShopBalance = parseInt(await TestToken.methods.balanceOf(shop).call());
-    let initialBucketBalance = parseInt(await TestToken.methods.balanceOf(ERC20Bucket._address).call());
+    let initialShopBalance = parseInt(await testTokenInstance.methods.balanceOf(shop).call());
+    let initialBucketBalance = parseInt(await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call());
 
-    await ERC20Bucket.methods.kill().send({
+    await bucketInstance.methods.kill().send({
       from: shop,
     });
 
     let expectedShopBalance = initialShopBalance + initialBucketBalance;
-    let shopBalance = await TestToken.methods.balanceOf(shop).call();
+    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), expectedShopBalance, `shop balance after kill is ${shopBalance} instead of ${expectedShopBalance}`);
 
-    let bucketBalance = await TestToken.methods.balanceOf(ERC20Bucket._address).call();
+    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucketBalance after kill is ${bucketBalance} instead of 0`);
   }
 
