@@ -2,7 +2,7 @@ pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
 import "./Bucket.sol";
-import "./erc20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20Bucket is Bucket {
   uint256 public redeemableSupply;

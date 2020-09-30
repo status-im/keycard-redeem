@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.2.0",
+    "eth-gas-reporter": "^0.2.17"
+  }
+}
