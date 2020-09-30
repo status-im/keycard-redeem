@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
 import "./Bucket.sol";
@@ -15,24 +15,24 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
     uint256 _expirationTime,
     uint256 _maxTxDelayInBlocks) Bucket("KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks) public {}
 
-  function transferRedeemable(uint256 data, Redeem memory redeem) internal {
+  function transferRedeemable(uint256 data, Redeem memory redeem) internal override {
     IERC721(tokenAddress).safeTransferFrom(address(this), redeem.receiver, data);
   }
 
-  function transferRedeemablesToOwner() internal {
+  function transferRedeemablesToOwner() internal override {
     IERC721(tokenAddress).setApprovalForAll(owner, true);
     assert(IERC721(tokenAddress).isApprovedForAll(address(this), owner));
   }
 
-  function bucketType() external returns (uint256) {
+  function bucketType() external override returns (uint256) {
     return 721;
   }
 
-  function supportsInterface(bytes4 interfaceID) external view returns (bool) {
+  function supportsInterface(bytes4 interfaceID) external override(IERC165) view returns (bool) {
       return interfaceID == _ERC721_RECEIVED;
   }
 
-  function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external returns(bytes4) {
+  function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
     require(msg.sender == tokenAddress, "only the NFT contract can call this");
     require((_operator == owner) || (_from == owner), "only the owner can create redeemables");
     require(_data.length == 52, "invalid data field");

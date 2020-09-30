@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.6.1;
 
 import "./StandardToken.sol";
 
@@ -16,8 +16,7 @@ contract TestToken is StandardToken {
     _decimals = decimals;
   }
 
-  // fallback
-  function() external {
+  fallback() external {
     uint256 amount = 5000;
     mint(amount * uint256(10)**_decimals);
   }

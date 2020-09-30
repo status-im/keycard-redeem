@@ -1,7 +1,7 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
-contract Bucket {
+abstract contract Bucket {
   bool initialized;
   address payable public owner;
   address public tokenAddress;
@@ -50,7 +50,7 @@ contract Bucket {
     startTime = _startTime;
     expirationTime = _expirationTime;
     maxTxDelayInBlocks = _maxTxDelayInBlocks;
-    owner = address(uint160(_owner));
+    owner = payable(_owner);
 
     DOMAIN_SEPARATOR = keccak256(abi.encode(
       EIP712DOMAIN_TYPEHASH,
@@ -63,11 +63,11 @@ contract Bucket {
     initialized = true;
   }
 
-  function transferRedeemable(uint256 data, Redeem memory redeem) internal;
+  function transferRedeemable(uint256 data, Redeem memory redeem) virtual internal;
 
-  function transferRedeemablesToOwner() internal;
+  function transferRedeemablesToOwner() virtual internal;
 
-  function bucketType() external returns (uint256);
+  function bucketType() virtual external returns (uint256);
 
   function redeem(Redeem calldata _redeem, bytes calldata _sig) external {
     // validate Redeem

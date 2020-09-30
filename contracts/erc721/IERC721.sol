@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.6.1;
 
 /**
  * @dev Required interface of an ERC721 compliant contract.

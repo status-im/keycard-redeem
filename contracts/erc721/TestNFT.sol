@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.6.1;
 
 import "./IERC721.sol";
 import "./IERC721Receiver.sol";
@@ -14,19 +14,19 @@ contract TestNFT is IERC165, IERC721 {
 
     bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
 
-    function balanceOf(address owner) public view returns (uint256) {
+    function balanceOf(address owner) public override(IERC721) view returns (uint256) {
         require(owner != address(0), "ERC721: balance query for the zero address");
         return _ownedTokensCount[owner];
     }
 
-    function ownerOf(uint256 tokenId) public view returns (address) {
+    function ownerOf(uint256 tokenId) public override(IERC721) view returns (address) {
         address owner = _tokenOwner[tokenId];
         require(owner != address(0), "ERC721: owner query for nonexistent token");
 
         return owner;
     }
 
-    function approve(address to, uint256 tokenId) public {
+    function approve(address to, uint256 tokenId) public override(IERC721) {
         address owner = ownerOf(tokenId);
         require(to != owner, "ERC721: approval to current owner");
 
@@ -38,34 +38,34 @@ contract TestNFT is IERC165, IERC721 {
         emit Approval(owner, to, tokenId);
     }
 
-    function getApproved(uint256 tokenId) public view returns (address) {
+    function getApproved(uint256 tokenId) public override(IERC721) view returns (address) {
         require(_exists(tokenId), "ERC721: approved query for nonexistent token");
 
         return _tokenApprovals[tokenId];
     }
 
-    function setApprovalForAll(address to, bool approved) public {
+    function setApprovalForAll(address to, bool approved) public override(IERC721) {
         require(to != msg.sender, "ERC721: approve to caller");
 
         _operatorApprovals[msg.sender][to] = approved;
         emit ApprovalForAll(msg.sender, to, approved);
     }
 
-    function isApprovedForAll(address owner, address operator) public view returns (bool) {
+    function isApprovedForAll(address owner, address operator) public override(IERC721) view returns (bool) {
         return _operatorApprovals[owner][operator];
     }
 
-    function transferFrom(address from, address to, uint256 tokenId) public {
+    function transferFrom(address from, address to, uint256 tokenId) public override(IERC721) {
         require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721: transfer caller is not owner nor approved");
 
         _transferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId) public {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public override(IERC721) {
         safeTransferFrom(from, to, tokenId, "");
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public {
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public override(IERC721) {
         transferFrom(from, to, tokenId);
         require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
     }
@@ -131,7 +131,7 @@ contract TestNFT is IERC165, IERC721 {
         return size > 0;
     }
 
-    function supportsInterface(bytes4 interfaceID) external view returns (bool) {
+    function supportsInterface(bytes4 interfaceID) external override(IERC165) view returns (bool) {
         return interfaceID == _INTERFACE_ID_ERC721;
     }
 }
