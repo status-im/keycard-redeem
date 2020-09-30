@@ -1,5 +1,5 @@
 const TestNFT = artifacts.require('TestNFT');
-const _NFTBucket = artifacts.require('NFTBucket');
+const NFTBucket = artifacts.require('NFTBucket');
 const NFTBucketFactory = artifacts.require('NFTBucketFactory');
 
 const TOTAL_SUPPLY = 10000;
@@ -9,37 +9,6 @@ const NOW = Math.round(new Date().getTime() / 1000);
 const START_TIME = NOW - 1;
 const EXPIRATION_TIME = NOW + 60 * 60 * 24; // in 24 hours
 const MAX_TX_DELAY_BLOCKS = 10;
-
-let shop,
-    user,
-    relayer,
-    keycard_1,
-    keycard_2;
-
-config({
-  contracts: {
-    deploy: {
-      "TestNFT": {
-        args: [],
-      },
-      "NFTBucket": {
-        args: ["$TestNFT", START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS],
-      },
-      "NFTBucketFactory": {
-        args: [],
-      },
-    }
-  },
-}, (_err, _accounts) => {
-  shop      = _accounts[0];
-  user      = _accounts[1];
-  relayer   = _accounts[2];
-  keycard_1 = _accounts[3];
-  keycard_2 = _accounts[4];
-  keycard_3 = _accounts[5];
-});
-
-let sendMethod;
 
 async function signRedeem(contractAddress, signer, message) {
   const result = await web3.eth.net.getId();
@@ -79,7 +48,7 @@ async function signRedeem(contractAddress, signer, message) {
   };
 
   return new Promise((resolve, reject) => {
-    sendMethod({
+    web3.currentProvider.send({
       jsonrpc: '2.0',
       id: Date.now().toString().substring(9),
       method: "eth_signTypedData",
@@ -96,7 +65,7 @@ async function signRedeem(contractAddress, signer, message) {
 
 function mineAt(timestamp) {
   return new Promise((resolve, reject) => {
-    sendMethod({
+    web3.currentProvider.send({
       jsonrpc: '2.0',
       method: "evm_mine",
       params: [timestamp],
@@ -117,48 +86,67 @@ if (assert.match === undefined) {
 }
 
 contract("NFTBucket", function () {
-  let NFTBucket;
+  let bucketInstance,
+    factoryInstance,
+    tokenInstance,
+    shop,
+    user,
+    relayer,
+    keycard_1,
+    keycard_2,
+    keycard_3;
 
-  sendMethod = (web3.currentProvider.sendAsync) ? web3.currentProvider.sendAsync.bind(web3.currentProvider) : web3.currentProvider.send.bind(web3.currentProvider);
+  before(async () => {
+    const accounts = await web3.eth.getAccounts();
+    shop      = accounts[0];
+    user      = accounts[1];
+    relayer   = accounts[2];
+    keycard_1 = accounts[3];
+    keycard_2 = accounts[4];
+    keycard_3 = accounts[5];
+
+    const deployedTestToken = await TestNFT.deployed();
+    tokenInstance = new web3.eth.Contract(TestNFT.abi, deployedTestToken.address);
+  });
 
   it("deploy factory", async () => {
-    // only to test gas
-    const deploy = NFTBucketFactory.deploy({
-      arguments: []
+    const contract = new web3.eth.Contract(NFTBucketFactory.abi);
+    const deploy = contract.deploy({ data: NFTBucketFactory.bytecode });
+    const gas = await deploy.estimateGas();
+    const rec = await deploy.send({
+      from: shop,
+      gas,
     });
 
-    const gas = await deploy.estimateGas();
-    await deploy.send({ gas })
+    factoryInstance = new web3.eth.Contract(NFTBucketFactory.abi, rec.options.address);
   });
 
   it("deploy bucket", async () => {
-    // only to test gas
-    const deploy = _NFTBucket.deploy({
-      arguments: [TestNFT._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
+    const instance = new web3.eth.Contract(NFTBucket.abi);
+    const deploy = instance.deploy({
+      data: NFTBucket.bytecode,
+      arguments: [tokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
+    });
+    const gas = await deploy.estimateGas();
+    const rec = await deploy.send({
+      from: shop,
+      gas,
     });
 
-    const gas = await deploy.estimateGas();
-    await deploy.send({ gas })
+    bucketInstance = new web3.eth.Contract(NFTBucket.abi, rec.options.address);
   });
 
   it("deploy bucket via factory", async () => {
-    const create = NFTBucketFactory.methods.create(TestNFT._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
+    const create = factoryInstance.methods.create(tokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
       gas: gas,
     });
-
-    const bucketAddress = receipt.events.BucketCreated.returnValues.bucket;
-    const jsonInterface = _NFTBucket.options.jsonInterface;
-    NFTBucket = new EmbarkJS.Blockchain.Contract({
-      abi: jsonInterface,
-      address: bucketAddress,
-    });
   });
 
   it("return correct bucket type", async function () {
-    let bucketType = await NFTBucket.methods.bucketType().call();
+    let bucketType = await bucketInstance.methods.bucketType().call();
     assert.equal(parseInt(bucketType), 721);
   });
 
@@ -169,33 +157,55 @@ contract("NFTBucket", function () {
   }
 
   async function checkRedeemable(recipient, tokenID) {
-    let redeemable = await NFTBucket.methods.redeemables(recipient).call();
+    let redeemable = await bucketInstance.methods.redeemables(recipient).call();
     assert.equal(redeemable.recipient, recipient, "redeemable not found");
     assert.equal(parseInt(redeemable.data), tokenID, "token ID does not match");
-    let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
-    assert.equal(tokenOwner, NFTBucket._address, "token owner is wrong");
+    let tokenOwner = await tokenInstance.methods.ownerOf(tokenID).call();
+    assert.equal(tokenOwner, bucketInstance.options.address, "token owner is wrong");
   }
 
   it("mint directly to redeemable", async function () {
-    await TestNFT.methods.mint(NFTBucket._address, 42, createRedeemableData(keycard_1)).send({
+    const mint = tokenInstance.methods.mint(bucketInstance.options.address, 42, createRedeemableData(keycard_1));
+    const gas = await mint.estimateGas();
+    await mint.send({
       from: shop,
+      gas,
     });
 
     await checkRedeemable(keycard_1, 42);
   });
 
   it("transfer token from shop", async function() {
-    await TestNFT.methods.mint(shop, 0xcafe).send({from: shop,});
-    await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 0xcafe, createRedeemableData(keycard_2)).send({from: shop});
+    const mint = tokenInstance.methods.mint(shop, 0xcafe)
+    let gas = await mint.estimateGas();
+    await mint.send({
+      from: shop,
+      gas,
+    });
 
+    const transfer = tokenInstance.methods.safeTransferFrom(shop, bucketInstance.options.address, 0xcafe, createRedeemableData(keycard_2))
+    gas = await transfer.estimateGas();
+    await transfer.send({
+      from: shop,
+      gas,
+    });
     await checkRedeemable(keycard_2, 0xcafe);
   });
 
   it("cannot create two redeemables for the same recipient", async function() {
-    await TestNFT.methods.mint(shop, 43).send({from: shop});
+    const mint = await tokenInstance.methods.mint(shop, 43)
+    const gas = await mint.estimateGas();
+    await mint.send({
+      from: shop,
+      gas,
+    });
 
     try {
-      await TestNFT.methods.safeTransferFrom(shop, NFTBucket._address, 43, createRedeemableData(keycard_2)).send({from: shop});
+      const transfer = tokenInstance.methods.safeTransferFrom(shop, bucketInstance.options.address, 43, createRedeemableData(keycard_2))
+      await transfer.send({
+        from: shop,
+        gas,
+      });
       assert.fail("transfer should have failed");
     } catch(e) {
       assert.match(e.message, /already used/);
@@ -205,7 +215,12 @@ contract("NFTBucket", function () {
 
   it("cannot create two redeemables for the same token", async function() {
     try {
-      await NFTBucket.methods.onERC721Received(shop, shop, 0xcafe, createRedeemableData(keycard_3)).send({from: shop});
+      const received = bucketInstance.methods.onERC721Received(shop, shop, 0xcafe, createRedeemableData(keycard_3))
+      const gas = await received.estimateGas();
+      await send({
+        from: shop,
+        gas,
+      });
       assert.fail("transfer should have failed");
     } catch(e) {
       assert.match(e.message, /only the NFT/);
@@ -214,7 +229,7 @@ contract("NFTBucket", function () {
   });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
-    let redeemable = await NFTBucket.methods.redeemables(recipient).call();
+    let redeemable = await bucketInstance.methods.redeemables(recipient).call();
     const tokenID = redeemable.data;
 
     const message = {
@@ -224,8 +239,8 @@ contract("NFTBucket", function () {
       code: redeemCode,
     };
 
-    const sig = await signRedeem(NFTBucket._address, signer, message);
-    const redeem = NFTBucket.methods.redeem(message, sig);
+    const sig = await signRedeem(bucketInstance.options.address, signer, message);
+    const redeem = bucketInstance.methods.redeem(message, sig);
     const redeemGas = await redeem.estimateGas();
     let receipt = await redeem.send({
       from: relayer,
@@ -235,7 +250,7 @@ contract("NFTBucket", function () {
     assert.equal(receipt.events.Redeemed.returnValues.recipient, recipient);
     assert.equal(receipt.events.Redeemed.returnValues.data, tokenID);
 
-    let tokenOwner = await TestNFT.methods.ownerOf(tokenID).call();
+    let tokenOwner = await tokenInstance.methods.ownerOf(tokenID).call();
     assert.equal(tokenOwner, receiver, `Token owner is ${tokenOwner} instead of the expected ${receiver}`);
   }
 
@@ -325,9 +340,14 @@ contract("NFTBucket", function () {
   });
 
   async function testKill() {
-    assert(!await TestNFT.methods.isApprovedForAll(NFTBucket._address, shop).call(), `${shop} should not be the operator of bucket's tokens`);
-    await NFTBucket.methods.kill().send({from: shop});
-    assert(await TestNFT.methods.isApprovedForAll(NFTBucket._address, shop).call(), `${shop} should become the operator of the destroyed bucket's tokens`);
+    assert(!await tokenInstance.methods.isApprovedForAll(bucketInstance.options.address, shop).call(), `${shop} should not be the operator of bucket's tokens`);
+    const kill = bucketInstance.methods.kill();
+    const gas = await kill.estimateGas();
+    await kill.send({
+      from: shop,
+      gas,
+    });
+    assert(await tokenInstance.methods.isApprovedForAll(bucketInstance.options.address, shop).call(), `${shop} should become the operator of the destroyed bucket's tokens`);
   }
 
   it("shop cannot kill contract before expirationTime", async function() {

@@ -79,10 +79,10 @@ function mineAt(timestamp) {
   });
 }
 
-contract("ERC20 buckets", function () {
+contract("ERC20Bucket", function () {
   let bucketInstance,
     factoryInstance,
-    testTokenInstance,
+    tokenInstance,
     shop,
     user,
     relayer,
@@ -98,7 +98,7 @@ contract("ERC20 buckets", function () {
     keycard_2 = accounts[4];
 
     const deployedTestToken = await TestToken.deployed();
-    testTokenInstance = new web3.eth.Contract(TestToken.abi, deployedTestToken.address);
+    tokenInstance = new web3.eth.Contract(TestToken.abi, deployedTestToken.address);
   });
 
   it("deploy factory", async () => {
@@ -117,7 +117,7 @@ contract("ERC20 buckets", function () {
     const instance = new web3.eth.Contract(ERC20Bucket.abi);
     const deploy = instance.deploy({
       data: ERC20Bucket.bytecode,
-      arguments: [testTokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
+      arguments: [tokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]
     });
     const gas = await deploy.estimateGas();
     const rec = await deploy.send({
@@ -129,7 +129,7 @@ contract("ERC20 buckets", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = factoryInstance.methods.create(testTokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
+    const create = factoryInstance.methods.create(tokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
@@ -143,38 +143,38 @@ contract("ERC20 buckets", function () {
   });
 
   it("shop buys 100 tokens", async function () {
-    let supply = await testTokenInstance.methods.totalSupply().call();
+    let supply = await tokenInstance.methods.totalSupply().call();
     assert.equal(parseInt(supply), 0);
 
-    await testTokenInstance.methods.mint(TOTAL_SUPPLY).send({
+    await tokenInstance.methods.mint(TOTAL_SUPPLY).send({
       from: shop,
     });
 
-    supply = await testTokenInstance.methods.totalSupply().call();
+    supply = await tokenInstance.methods.totalSupply().call();
     assert.equal(parseInt(supply), TOTAL_SUPPLY);
 
-    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
+    let shopBalance = await tokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY);
   });
 
   it("add supply", async function() {
-    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    let bucketBalance = await tokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucket balance before is ${bucketBalance} instead of 0`);
 
-    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
+    let shopBalance = await tokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), TOTAL_SUPPLY, `shop balance before is ${shopBalance} instead of ${TOTAL_SUPPLY}`);
 
-    const transfer = testTokenInstance.methods.transfer(bucketInstance.options.address, TOTAL_SUPPLY);
+    const transfer = tokenInstance.methods.transfer(bucketInstance.options.address, TOTAL_SUPPLY);
     const transferGas = await transfer.estimateGas();
     await transfer.send({
       from: shop,
       gas: transferGas,
     });
 
-    bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    bucketBalance = await tokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), TOTAL_SUPPLY, `bucket balance after is ${bucketBalance} instead of ${TOTAL_SUPPLY}`);
 
-    shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
+    shopBalance = await tokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), 0, `shop balance after is ${shopBalance} instead of 0`);
 
     let totalSupply = await bucketInstance.methods.totalSupply().call();
@@ -245,8 +245,8 @@ contract("ERC20 buckets", function () {
   });
 
   async function testRedeem(receiver, recipient, signer, relayer, redeemCode, blockNumber, blockHash) {
-    let initialBucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
-    let initialUserBalance = await testTokenInstance.methods.balanceOf(user).call();
+    let initialBucketBalance = await tokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    let initialUserBalance = await tokenInstance.methods.balanceOf(user).call();
     let initialRedeemableSupply = await bucketInstance.methods.redeemableSupply().call();
 
     let redeemable = await bucketInstance.methods.redeemables(recipient).call();
@@ -271,11 +271,11 @@ contract("ERC20 buckets", function () {
     assert.equal(receipt.events.Redeemed.returnValues.data, redeemable.data);
 
     let expectedBucketBalance = parseInt(initialBucketBalance) - amount;
-    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    let bucketBalance = await tokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), expectedBucketBalance, `bucketBalance after redeem should be ${expectedBucketBalance} instead of ${bucketBalance}`);
 
     let expectedUserBalance = parseInt(initialUserBalance + amount);
-    userBalance = await testTokenInstance.methods.balanceOf(user).call();
+    userBalance = await tokenInstance.methods.balanceOf(user).call();
     assert.equal(parseInt(userBalance), expectedUserBalance, `user`, `userBalance after redeem should be ${expectedUserBalance} instead of ${userBalance}`);
 
     let expectedRedeemableSupply = initialRedeemableSupply - amount;
@@ -369,18 +369,18 @@ contract("ERC20 buckets", function () {
   });
 
   async function testKill() {
-    let initialShopBalance = parseInt(await testTokenInstance.methods.balanceOf(shop).call());
-    let initialBucketBalance = parseInt(await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call());
+    let initialShopBalance = parseInt(await tokenInstance.methods.balanceOf(shop).call());
+    let initialBucketBalance = parseInt(await tokenInstance.methods.balanceOf(bucketInstance.options.address).call());
 
     await bucketInstance.methods.kill().send({
       from: shop,
     });
 
     let expectedShopBalance = initialShopBalance + initialBucketBalance;
-    let shopBalance = await testTokenInstance.methods.balanceOf(shop).call();
+    let shopBalance = await tokenInstance.methods.balanceOf(shop).call();
     assert.equal(parseInt(shopBalance), expectedShopBalance, `shop balance after kill is ${shopBalance} instead of ${expectedShopBalance}`);
 
-    let bucketBalance = await testTokenInstance.methods.balanceOf(bucketInstance.options.address).call();
+    let bucketBalance = await tokenInstance.methods.balanceOf(bucketInstance.options.address).call();
     assert.equal(parseInt(bucketBalance), 0, `bucketBalance after kill is ${bucketBalance} instead of 0`);
   }
 
