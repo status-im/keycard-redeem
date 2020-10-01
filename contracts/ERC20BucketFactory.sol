@@ -13,7 +13,7 @@ contract ERC20BucketFactory {
   }
 
   function create(address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks) public returns (address) {
-    address p = address(new Proxy(abi.encodeWithSelector(0xe0c69ab8, "KeycardERC20Bucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks, msg.sender), address(ERC20BucketImplementation)));
+    address p = address(new Proxy(abi.encodeWithSelector(0x185d1646, "KeycardERC20Bucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks), address(ERC20BucketImplementation)));
     emit BucketCreated(msg.sender, p);
     return p;
   }

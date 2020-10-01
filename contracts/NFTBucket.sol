@@ -20,6 +20,7 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
   }
 
   function transferRedeemablesToOwner() internal override {
+    address owner = owner();
     IERC721(tokenAddress).setApprovalForAll(owner, true);
     assert(IERC721(tokenAddress).isApprovedForAll(address(this), owner));
   }
@@ -34,7 +35,7 @@ contract NFTBucket is Bucket, IERC165, IERC721Receiver {
 
   function onERC721Received(address _operator, address _from, uint256 _tokenID, bytes calldata _data) external override(IERC721Receiver) returns(bytes4) {
     require(msg.sender == tokenAddress, "only the NFT contract can call this");
-    require((_operator == owner) || (_from == owner), "only the owner can create redeemables");
+    require((_operator == owner()) || (_from == owner()), "only the owner can create redeemables");
     require(_data.length == 52, "invalid data field");
 
     bytes memory d = _data;

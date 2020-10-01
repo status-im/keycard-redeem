@@ -1,11 +1,11 @@
 pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
-abstract contract Bucket {
+abstract contract Bucket is OwnableUpgradeSafe {
   bool initialized;
-  address payable public owner;
   address public tokenAddress;
   uint256 public expirationTime;
   uint256 public startTime;
@@ -34,16 +34,16 @@ abstract contract Bucket {
 
   mapping(address => Redeemable) public redeemables;
 
-  modifier onlyOwner() {
-    require(msg.sender == owner, "owner required");
-    _;
-  }
-
   constructor(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks) public {
-    initialize(_eip712DomainName, _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks, msg.sender);
+    initialize(_eip712DomainName, _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks);
   }
 
-  function initialize(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks, address _owner) public {
+  // called by OwnableUpgradeSafe; using tx.origin otherwise msg.sender would be the factory
+  function _msgSender() internal view override(ContextUpgradeSafe) returns (address payable) {
+    return tx.origin;
+  }
+
+  function initialize(bytes memory _eip712DomainName, address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks) public {
     require(initialized == false, "already initialized");
     require(_maxTxDelayInBlocks > 0 && _maxTxDelayInBlocks < 256, "the valid range is 1 to 255");
     require(_expirationTime > block.timestamp, "expiration can't be in the past");
@@ -52,7 +52,8 @@ abstract contract Bucket {
     startTime = _startTime;
     expirationTime = _expirationTime;
     maxTxDelayInBlocks = _maxTxDelayInBlocks;
-    owner = payable(_owner);
+
+    __Ownable_init();
 
     DOMAIN_SEPARATOR = keccak256(abi.encode(
       EIP712DOMAIN_TYPEHASH,
@@ -101,7 +102,7 @@ abstract contract Bucket {
   function kill() external onlyOwner {
     require(block.timestamp >= expirationTime, "not expired yet");
     transferRedeemablesToOwner();
-    selfdestruct(owner);
+    selfdestruct(payable(owner()));
   }
 
   function getChainID() internal pure returns (uint256) {

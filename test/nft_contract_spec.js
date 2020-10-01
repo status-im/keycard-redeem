@@ -1,6 +1,10 @@
 const TestNFT = artifacts.require('TestNFT');
 const NFTBucket = artifacts.require('NFTBucket');
 const NFTBucketFactory = artifacts.require('NFTBucketFactory');
+const {
+  bucketShouldBeOwnable,
+  factoryShouldCreateAnOwnableBucket,
+} = require("./helpers");
 
 const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
@@ -109,6 +113,9 @@ contract("NFTBucket", function () {
     tokenInstance = new web3.eth.Contract(TestNFT.abi, deployedTestToken.address);
   });
 
+  bucketShouldBeOwnable("nft", () => [NFTBucket, shop, tokenInstance, [START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]]);
+  factoryShouldCreateAnOwnableBucket("nft", () => [NFTBucketFactory, NFTBucket, shop, tokenInstance, [START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]]);
+
   it("deploy factory", async () => {
     const contract = new web3.eth.Contract(NFTBucketFactory.abi);
     const deploy = contract.deploy({ data: NFTBucketFactory.bytecode });
@@ -137,9 +144,9 @@ contract("NFTBucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = factoryInstance.methods.create(tokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
+    const create = factoryInstance.methods.create(tokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
-    const receipt = await create.send({
+    const rec = await create.send({
       from: shop,
       gas: gas,
     });

@@ -2,7 +2,7 @@ pragma solidity ^0.6.1;
 pragma experimental ABIEncoderV2;
 
 import "./Bucket.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20Bucket is Bucket {
   uint256 public redeemableSupply;
@@ -48,7 +48,7 @@ contract ERC20Bucket is Bucket {
   }
 
   function transferRedeemablesToOwner() internal override {
-    bool success = IERC20(tokenAddress).transfer(owner, this.totalSupply());
+    bool success = IERC20(tokenAddress).transfer(owner(), this.totalSupply());
     assert(success);
   }
 

@@ -13,7 +13,7 @@ contract NFTBucketFactory {
   }
 
   function create(address _tokenAddress, uint256 _startTime, uint256 _expirationTime, uint256 _maxTxDelayInBlocks) public returns (address) {
-    address p = address(new Proxy(abi.encodeWithSelector(0xe0c69ab8, "KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks, msg.sender), address(NFTBucketImplementation)));
+    address p = address(new Proxy(abi.encodeWithSelector(0x185d1646, "KeycardNFTBucket", _tokenAddress, _startTime, _expirationTime, _maxTxDelayInBlocks), address(NFTBucketImplementation)));
     emit BucketCreated(msg.sender, p);
     return p;
   }

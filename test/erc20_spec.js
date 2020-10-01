@@ -1,6 +1,10 @@
 const TestToken = artifacts.require('TestToken');
 const ERC20Bucket = artifacts.require('ERC20Bucket');
 const ERC20BucketFactory = artifacts.require('ERC20BucketFactory');
+const {
+  bucketShouldBeOwnable,
+  factoryShouldCreateAnOwnableBucket,
+} = require("./helpers");
 
 const TOTAL_SUPPLY = 10000;
 const GIFT_AMOUNT = 10;
@@ -102,6 +106,9 @@ contract("ERC20Bucket", function () {
     tokenInstance = new web3.eth.Contract(TestToken.abi, deployedTestToken.address);
   });
 
+  bucketShouldBeOwnable("erc20", () => [ERC20Bucket, shop, tokenInstance, [START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]]);
+  factoryShouldCreateAnOwnableBucket("erc20", () => [ERC20BucketFactory, ERC20Bucket, shop, tokenInstance, [START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS]]);
+
   it("deploy factory", async () => {
     const contract = new web3.eth.Contract(ERC20BucketFactory.abi);
     const deploy = contract.deploy({ data: ERC20BucketFactory.bytecode });
@@ -130,7 +137,7 @@ contract("ERC20Bucket", function () {
   });
 
   it("deploy bucket via factory", async () => {
-    const create = factoryInstance.methods.create(tokenInstance._address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
+    const create = factoryInstance.methods.create(tokenInstance.options.address, START_TIME, EXPIRATION_TIME, MAX_TX_DELAY_BLOCKS);
     const gas = await create.estimateGas();
     const receipt = await create.send({
       from: shop,
