@@ -3,8 +3,9 @@ pragma experimental ABIEncoderV2;
 
 import "./Bucket.sol";
 import "./erc721/IERC721.sol";
-import "./erc721/IERC721Receiver.sol";
-import "./erc721/IERC165.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC165.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 contract NFTBucket is Bucket, IERC165, IERC721Receiver {
   bytes4 private constant _ERC721_RECEIVED = 0x150b7a02; //bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))

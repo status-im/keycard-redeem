@@ -1,8 +1,8 @@
 pragma solidity ^0.6.1;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC165.sol";
 import "./IERC721.sol";
-import "./IERC721Receiver.sol";
-import "./IERC165.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract TestNFT is IERC165, IERC721 {
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
