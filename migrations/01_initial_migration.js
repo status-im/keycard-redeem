@@ -9,7 +9,7 @@ module.exports = function(deployer, network) {
   deployer.deploy(NFTBucketFactory);
   deployer.deploy(ERC20BucketFactory);
 
-  if (network === "development") {
+  if (network === "development" || network === "test") {
     deployer.deploy(TestToken, "Dev Test Token", "DTT", 18);
     deployer.deploy(TestNFT);
   }

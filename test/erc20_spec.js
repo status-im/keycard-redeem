@@ -86,6 +86,7 @@ function mineAt(timestamp) {
 
 contract("ERC20Bucket", function () {
   let bucketInstance,
+    domainSeparator,
     factoryInstance,
     tokenInstance,
     shop,
@@ -134,6 +135,7 @@ contract("ERC20Bucket", function () {
     });
 
     bucketInstance = new web3.eth.Contract(ERC20Bucket.abi, rec.options.address);
+    domainSeparator = await bucketInstance.methods.DOMAIN_SEPARATOR().call();
   });
 
   it("deploy bucket via factory", async () => {
@@ -196,7 +198,7 @@ contract("ERC20Bucket", function () {
     let initialSupply = await bucketInstance.methods.totalSupply().call();
     let initialAvailableSupply = await bucketInstance.methods.availableSupply().call();
 
-    const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
+    const redeemCodeHash = web3.utils.soliditySha3(domainSeparator, keycard, REDEEM_CODE);
     const createRedeemable = bucketInstance.methods.createRedeemable(keycard, amount, redeemCodeHash);
     const createRedeemableGas = await createRedeemable.estimateGas();
     await createRedeemable.send({

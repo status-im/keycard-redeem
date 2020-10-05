@@ -91,6 +91,7 @@ if (assert.match === undefined) {
 
 contract("NFTBucket", function () {
   let bucketInstance,
+    domainSeparator,
     factoryInstance,
     tokenInstance,
     shop,
@@ -141,6 +142,7 @@ contract("NFTBucket", function () {
     });
 
     bucketInstance = new web3.eth.Contract(NFTBucket.abi, rec.options.address);
+    domainSeparator = await bucketInstance.methods.DOMAIN_SEPARATOR().call();
   });
 
   it("deploy bucket via factory", async () => {
@@ -159,7 +161,7 @@ contract("NFTBucket", function () {
 
 
   function createRedeemableData(recipient) {
-      const redeemCodeHash = web3.utils.sha3(REDEEM_CODE);
+      const redeemCodeHash = web3.utils.soliditySha3(domainSeparator, recipient, REDEEM_CODE);
       return recipient + redeemCodeHash.replace("0x", "");
   }
 

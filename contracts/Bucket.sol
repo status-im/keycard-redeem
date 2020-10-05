@@ -13,7 +13,7 @@ abstract contract Bucket is OwnableUpgradeSafe {
 
   bytes32 constant REDEEM_TYPEHASH = keccak256("Redeem(uint256 blockNumber,bytes32 blockHash,address receiver,bytes32 code)");
   bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-  bytes32 DOMAIN_SEPARATOR;
+  bytes32 public DOMAIN_SEPARATOR;
 
   string _relayerURI;
 
@@ -86,7 +86,7 @@ abstract contract Bucket is OwnableUpgradeSafe {
     require(redeemable.recipient == recipient, "not found");
 
     // validate code
-    bytes32 codeHash = keccak256(abi.encodePacked(_redeem.code));
+    bytes32 codeHash = keccak256(abi.encodePacked(DOMAIN_SEPARATOR, redeemable.recipient, _redeem.code));
     require(codeHash == redeemable.code, "invalid code");
 
     uint256 data = redeemable.data;
