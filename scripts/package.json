@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "minimist": "^1.2.5",
     "morgan": "^1.10.0",
     "solc": "0.5.16",
